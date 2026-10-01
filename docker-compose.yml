@@ -1,0 +1,64 @@
+# Works from a clean clone without a .env file; see .env.example to override defaults.
+
+x-api-image: &api-image
+  image: mes-api
+  build:
+    context: .
+    dockerfile: api/Dockerfile
+
+x-database-url: &database-url
+  DATABASE_URL: postgresql://${POSTGRES_USER:-mes}:${POSTGRES_PASSWORD:-mes}@db:5432/${POSTGRES_DB:-mes}
+
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mes}
+      POSTGRES_DB: ${POSTGRES_DB:-mes}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U ${POSTGRES_USER:-mes} -d ${POSTGRES_DB:-mes}"]
+      interval: 2s
+      timeout: 3s
+      retries: 15
+
+  # One-shot: applies migrations (and, from slice 1, seed data), then exits.
+  migrate:
+    <<: *api-image
+    command: ["npx", "prisma", "migrate", "deploy"]
+    environment:
+      <<: *database-url
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    <<: *api-image
+    environment:
+      <<: *database-url
+      PORT: "3000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 3s
+      timeout: 3s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    depends_on:
+      api:
+        condition: service_healthy
+        # nginx resolves `api` once at startup, so follow the API when it is recreated.
+        restart: true
+
+volumes:
+  db-data:

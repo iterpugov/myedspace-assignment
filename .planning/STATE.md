@@ -3,13 +3,13 @@
 > Single source of truth for "where are we now". Decisions move from here into an ADR and
 > `PROJECT.md` once the user makes them.
 >
-> **Updated:** 2026-10-01
+> **Updated:** 2026-10-02
 
 ## Phase
 
-Slice 0 (skeleton) in progress. Decisions are recorded as ADR 001–015, the roadmap slices
-are agreed, and the plan is in `plans/PLAN_slice-0-skeleton.md` with its minor defaults
-M1–M11 accepted.
+Slice 0 (skeleton) is done: `docker compose up` starts `db`, `migrate`, `api` and `web`,
+and the SPA shows the API health check that reached PostgreSQL. Next is slice 1
+(catalogue and product page), full pipeline starting with `planner`.
 
 ## Decided
 

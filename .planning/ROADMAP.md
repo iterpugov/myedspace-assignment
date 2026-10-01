@@ -10,7 +10,7 @@ with `docker compose up` and the journey works up to that point.
 
 | # | Slice | Requirements | Done when | Estimate | Status |
 |---|-------|--------------|-----------|----------|--------|
-| 0 | Skeleton: workspaces, `api`, `web`, `contracts`, four compose services, Prisma with the first migration | DEL-2, TEC-1, TEC-2 | The SPA page loads and gets a response from the API that reached the database | 40 min | not started |
+| 0 | Skeleton: workspaces, `api`, `web`, `contracts`, four compose services, Prisma with the first migration | DEL-2, TEC-1, TEC-2 | The SPA page loads and gets a response from the API that reached the database | 40 min | done |
 | 1 | Catalogue and product page: seed of three courses; select a course, then the year from its range | PUR-1, PUR-2, CAT-1, CAT-2 | The parent selects a course and can pick only a year that course covers | 25 min | not started |
 | 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | not started |
 | 3 | Onboarding: form, username, password; account and enrolment in one transaction | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | not started |
