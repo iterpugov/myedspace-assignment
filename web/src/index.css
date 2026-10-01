@@ -1,1 +1,114 @@
 @import 'tailwindcss';
+
+/* Design tokens — see DESIGN_SYSTEM.md. */
+@theme {
+  /* Only the documented palette exists; Tailwind's default colours are switched off. */
+  --color-*: initial;
+  --color-white: #ffffff;
+
+  --container-page: 1200px;
+  --container-form: 560px;
+
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand: #3333ff;
+  --color-brand-deep: #1c19e4;
+  --color-brand-strip: #2925f1;
+  --color-brand-soft: #6765f3;
+  --color-accent: #b1db00;
+  --color-sky: #a4e1ef;
+  --color-sky-light: #b4e6f3;
+  --color-surface: #ffffff;
+  --color-surface-tint: #f1f0ff;
+  --color-ink: #1d1e22;
+  --color-line: #dfe3e6;
+  --color-line-brand: #bfbfe8;
+  --color-disabled: #f2f4f5;
+  --color-danger: #ff4345;
+}
+
+@layer base {
+  body {
+    @apply bg-surface font-sans text-ink antialiased;
+  }
+}
+
+/* Type styles: phone sizes first, larger from 768px. */
+@utility type-display {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  @variant md {
+    font-size: 4.5rem;
+  }
+}
+
+@utility type-heading {
+  font-size: 2rem;
+  line-height: 1.1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  @variant md {
+    font-size: 2.75rem;
+  }
+}
+
+@utility type-subheading {
+  font-size: 1.5rem;
+  line-height: 1.25;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility type-eyebrow {
+  font-size: 1.75rem;
+  line-height: 1.2;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+@utility type-body {
+  font-size: 1.125rem;
+  line-height: 1.5;
+}
+
+@utility type-label {
+  font-size: 1rem;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+@utility type-small {
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+/* Stepped corner: a square cut from the top-left and the bottom-right. */
+@utility notch-sm {
+  --notch: 8px;
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch),
+    var(--notch) var(--notch)
+  );
+}
+
+@utility notch-lg {
+  --notch: 16px;
+  clip-path: polygon(
+    var(--notch) 0,
+    100% 0,
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    0 100%,
+    0 var(--notch),
+    var(--notch) var(--notch)
+  );
+}

@@ -58,9 +58,9 @@ is the open substitute.
 
 ## Layout
 
-- Content width: 1200px maximum, centred, with 24px side padding (16px on small screens).
+- Content width (`max-w-page`): 1200px maximum, centred, with 24px side padding (16px on small screens).
 - Spacing follows a 4px base; sections are separated by 96px, blocks inside a section by 32px.
-- Forms are a single column, at most 560px wide.
+- Forms are a single column, at most 560px wide (`max-w-form`).
 - Below 768px everything is one column: course cards stack, the header navigation wraps
   under the wordmark, and controls are at least 44px tall.
 
@@ -68,22 +68,24 @@ is the open substitute.
 
 - **Corners:** radius 0 everywhere.
 - **Notch:** primary buttons and cards have a stepped corner — a small square (8px on
-  buttons, 16px on cards) cut from the bottom-left and top-right, as if the shape were two
-  offset rectangles. Implemented with `clip-path`, one utility class.
+  buttons, 16px on cards) cut from the top-left and bottom-right, as if the shape were two
+  offset rectangles. Implemented with `clip-path` as the utilities `notch-sm` and
+  `notch-lg`.
 - **Shadows:** none, except a light one on cards that sit on `sky`.
 
 ## Components
 
 | Component | Description |
 |---|---|
-| `PageShell` | Header plus a main area. Variants: `brand` (blue hero pages: product page) and `plain` (white: checkout, onboarding, LMS) |
-| `Header` | Blue bar with a 1px `line-brand` outline: text wordmark on the left, navigation in the centre, actions on the right (lime button, plain "Sign in" link) |
-| `Button` | `primary`: lime, ink text, notched, 56px tall. `outline`: white, 1px `line-brand` border, blue text. `link`: blue text, used for "Back". All show a visible focus ring and a disabled state |
+| `PageShell` | Header plus a white main area. An optional `hero` is shown on a blue band under the header (product page); without it the page is plain white (checkout, onboarding, LMS) |
+| `Header` | Blue bar with a faint 1px `line-brand` outline: text wordmark on the left, navigation links on the right ("Courses", "Sign in"); the links wrap under the wordmark on a phone |
+| `Button` | `primary`: lime, ink text, notched, 56px tall. `outline`: white, 1px `line-brand` border, blue text. `link` (`TextLink`): blue text, used for "Back". All show a visible focus ring and a disabled state |
 | `Card` | `surface-tint` background, notched, 32px padding; optional small label above the title ("Unit 1") |
+| `ChoiceCard` | A `Card` that is one option of a radio group: the whole card is the click target, and the selected card turns `brand` with white text |
 | `Field` | Label above, square input 48px tall with a 1px `line` border; border turns `brand` on focus and `danger` on error; error text below in `danger` |
-| `Select` | Same look as `Field`; used for the year |
+| `Select` | Same look as `Field`, with a chevron on the right; used for the year |
 | `Steps` | Row of equal segments, filled in `brand` up to the current step, with a "n of m steps" caption |
-| `Notice` | Bordered message block: `info` (brand) and `error` (danger) |
+| `Notice` | Message block with a coloured left edge: `info` (brand) and `error` (danger). Errors are announced to assistive technology; an info notice only when marked `live` |
 
 ## Accessibility
 
@@ -100,4 +102,8 @@ photography, the trust-score widgets — are outside the brief and are not built
 pixel-block dividers and scattered squares of the real site are left out as well.
 
 Components are built when a page first needs them: slice 1 builds `PageShell`, `Header`,
-`Button`, `Card`, `Select` and `Notice`; `Field` and `Steps` arrive with the checkout.
+`Button` (primary), `TextLink`, `ChoiceCard`, `Select` and `Notice`; `Card`, `Field`,
+`Steps` and the `outline` button arrive with the pages that use them.
+
+Only the colours in the table above exist in the Tailwind theme — the default palette is
+switched off, so an undocumented colour does not compile.
