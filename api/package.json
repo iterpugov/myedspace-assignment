@@ -1,0 +1,36 @@
+{
+  "name": "api",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "prisma:generate": "prisma generate",
+    "prebuild": "npm run prisma:generate",
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "pretest": "npm run prisma:generate",
+    "test": "jest",
+    "db:dev": "docker run --rm -d --name mes-dev-db -e POSTGRES_USER=mes -e POSTGRES_PASSWORD=mes -e POSTGRES_DB=mes -p 54329:5432 postgres:17-alpine",
+    "db:dev:stop": "docker stop mes-dev-db"
+  },
+  "dependencies": {
+    "@nestjs/common": "^11.2.7",
+    "@nestjs/core": "^11.2.7",
+    "@nestjs/platform-express": "^11.2.7",
+    "@prisma/adapter-pg": "7.10.0",
+    "@prisma/client": "7.10.0",
+    "prisma": "7.10.0",
+    "reflect-metadata": "^0.2.2",
+    "rxjs": "^7.8.2"
+  },
+  "devDependencies": {
+    "@mes/contracts": "*",
+    "@nestjs/cli": "^11.0.24",
+    "@nestjs/schematics": "^11.1.0",
+    "@nestjs/testing": "^11.2.7",
+    "@types/jest": "^29.5.14",
+    "@types/node": "^22.20.4",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.4.14"
+  }
+}
