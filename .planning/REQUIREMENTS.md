@@ -9,8 +9,8 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 - [x] **PUR-1** Parent lands on a product page
 - [x] **PUR-2** Parent selects a course
-- [ ] **PUR-3** Parent completes a mock checkout (no real payment integration)
-- [ ] **PUR-4** After purchase, the system generates a student access path (e.g. invitation link)
+- [x] **PUR-3** Parent completes a mock checkout (no real payment integration)
+- [x] **PUR-4** After purchase, the system generates a student access path (e.g. invitation link)
 
 ## Student onboarding
 

@@ -7,13 +7,17 @@
 
 ## Phase
 
-Slices 0 and 1 are done: the product page lists the seeded courses and hands the chosen
-course and year to `/checkout`, which is still a placeholder. Next is slice 2 (checkout
-and activation code), full pipeline with `security-reviewer`, starting with `planner`.
+Slices 0–2 are done: a parent picks a course and year, pays through the mock checkout and
+gets an activation code and link. The link opens `/activate`, which is still a placeholder.
+Next is slice 3 (onboarding), full pipeline with `security-reviewer`, starting with
+`planner`.
 
-Carried into slice 2 from the slice 1 reviews:
-- The API request-validation mechanism is undecided (needed for `courseId` and `year`).
-- The integration harness needs a database reset helper once tests start writing rows.
+Carried into slice 3 from the slice 2 reviews:
+- Validate the code's shape and cap its length before hashing.
+- Remove `#code=` from the address with `history.replaceState` once it is read.
+- Single use must be enforced by a database constraint (ADR 009).
+- Decide whether an unknown code and a redeemed code get the same response.
+- Whether a failed charge should answer 502 instead of the default 500 is undecided.
 
 ## Decided
 
@@ -38,6 +42,10 @@ Carried into slice 2 from the slice 1 reviews:
 - Toolchain: NestJS 11, Prisma 7.10.0, TypeScript 5.9.3 (ADR 015)
 - SPA follows the MyEdSpace visual language, described in `web/DESIGN_SYSTEM.md` (ADR 016)
 - Catalogue contract: UUID ids, pence, selection in the URL (ADR 017)
+- Request validation: `class-validator` + global `ValidationPipe` (ADR 018)
+- An activation code row carries its own course and year (ADR 019)
+- The plain code is never logged; router state and a URL fragment carry it (ADR 020)
+- Codes are issued before the order is saved; no shared transaction (ADR 021)
 
 ## Open decisions
 

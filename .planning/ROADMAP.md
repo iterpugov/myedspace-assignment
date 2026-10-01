@@ -12,7 +12,7 @@ with `docker compose up` and the journey works up to that point.
 |---|-------|--------------|-----------|----------|--------|
 | 0 | Skeleton: workspaces, `api`, `web`, `contracts`, four compose services, Prisma with the first migration | DEL-2, TEC-1, TEC-2 | The SPA page loads and gets a response from the API that reached the database | 40 min | done |
 | 1 | Design foundation, catalogue and product page: tokens and components from `web/DESIGN_SYSTEM.md`; seed of three courses; select a course, then the year from its range | PUR-1, PUR-2, CAT-1, CAT-2 | The parent selects a course and can pick only a year that course covers; the page is built from the documented components | 55 min | done |
-| 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | not started |
+| 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | done |
 | 3 | Onboarding: form, username, password; account and enrolment in one transaction | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | not started |
 | 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | not started |
 | 5 | Optional — add a course to an existing account: code carried through login, code entry in the LMS, duplicate message | ADR 005 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | not started |
@@ -32,7 +32,7 @@ this list feeds the README.
 
 - **Parent accounts** — checkout is guest-only (ADR 001). Production: parent login, order
   history, re-sending invitations.
-- **Email delivery** — the invitation link is shown on the confirmation page and logged.
+- **Email delivery** — the invitation link is shown on the confirmation page.
   Production: sent by email.
 - **Several students per order in the UI** — the API accepts many seats, the UI sends one
   (ADR 003). Production: "add student" in checkout, sibling pricing.
@@ -45,6 +45,12 @@ this list feeds the README.
   small suite for purchase → onboarding → LMS.
 - **Declined payments** — the mock gateway always approves (ADR 010). Production: a
   provider's hosted page, pending orders confirmed by webhook.
+- **Idempotent checkout** — a double submit creates two orders; the form only disables the
+  button while a request is pending. Production: an idempotency key per checkout attempt.
+- **Rate limiting** — the anonymous checkout endpoint is not throttled. Production: limits
+  per client at the gateway, and on code redemption above all.
+- **Cleaning up orphan activation codes** — a code issued for an order that then failed
+  stays in the table (ADR 021). Production: removed by age.
 - **Password reset** — the student has a username and no email (ADR 007). Production:
   recovery through the parent's account.
 - **Resolving a duplicate purchase** — the student is told to contact their parent
