@@ -3,15 +3,15 @@
 Delivery slices for the take-home. Each slice is vertical: when it is done, the app runs
 with `docker compose up` and the journey works up to that point.
 
-> **Status: agreed 2026-10-01.** Estimates add up to about 3 h 15 min without slice 5 and
-> 3 h 40 min with it.
+> **Status: agreed 2026-10-01.** Estimates add up to about 3 h 45 min without slice 5 and
+> 4 h 10 min with it (slice 1 grew by 30 min with ADR 016).
 
 ## Slices
 
 | # | Slice | Requirements | Done when | Estimate | Status |
 |---|-------|--------------|-----------|----------|--------|
 | 0 | Skeleton: workspaces, `api`, `web`, `contracts`, four compose services, Prisma with the first migration | DEL-2, TEC-1, TEC-2 | The SPA page loads and gets a response from the API that reached the database | 40 min | done |
-| 1 | Catalogue and product page: seed of three courses; select a course, then the year from its range | PUR-1, PUR-2, CAT-1, CAT-2 | The parent selects a course and can pick only a year that course covers | 25 min | not started |
+| 1 | Design foundation, catalogue and product page: tokens and components from `web/DESIGN_SYSTEM.md`; seed of three courses; select a course, then the year from its range | PUR-1, PUR-2, CAT-1, CAT-2 | The parent selects a course and can pick only a year that course covers; the page is built from the documented components | 55 min | not started |
 | 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | not started |
 | 3 | Onboarding: form, username, password; account and enrolment in one transaction | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | not started |
 | 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | not started |
@@ -38,6 +38,9 @@ this list feeds the README.
   (ADR 003). Production: "add student" in checkout, sibling pricing.
 - **Several courses per student in one order** — one course per seat (ADR 003).
   Production: multi-subject selection with bundle pricing.
+- **Marketing sections and brand assets** — review carousels, curriculum sliders,
+  photography and the MES logo are not reproduced (ADR 016). Production: the product's own
+  design system and assets.
 - **Browser end-to-end tests** — the journey is checked by hand (ADR 013). Production: a
   small suite for purchase → onboarding → LMS.
 - **Declined payments** — the mock gateway always approves (ADR 010). Production: a

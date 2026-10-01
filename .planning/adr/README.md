@@ -22,6 +22,7 @@ the decision; it records the call, it does not make it.
 | 013 | [Test strategy: Jest and Testcontainers for the API, Vitest for the SPA](013-test-strategy.md) | accepted | 2026-10-01 |
 | 014 | [Frontend tooling](014-frontend-tooling.md) | accepted | 2026-10-01 |
 | 015 | [Toolchain versions are pinned to the last proven majors](015-toolchain-versions.md) | accepted | 2026-10-01 |
+| 016 | [The SPA follows the MyEdSpace visual language, described as a design system](016-mes-visual-language.md) | accepted | 2026-10-02 |
 
 ## Format
 

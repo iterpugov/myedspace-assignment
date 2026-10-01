@@ -9,7 +9,7 @@
 
 Slice 0 (skeleton) is done: `docker compose up` starts `db`, `migrate`, `api` and `web`,
 and the SPA shows the API health check that reached PostgreSQL. Next is slice 1
-(catalogue and product page), full pipeline starting with `planner`.
+(design foundation, catalogue and product page), full pipeline starting with `planner`.
 
 ## Decided
 
@@ -32,6 +32,7 @@ and the SPA shows the API health check that reached PostgreSQL. Next is slice 1
 - Tests: Jest + Testcontainers for the API, Vitest + RTL for the SPA (ADR 013)
 - SPA tooling: Vite, React Router, TanStack Query, Tailwind, React Hook Form (ADR 014)
 - Toolchain: NestJS 11, Prisma 7.10.0, TypeScript 5.9.3 (ADR 015)
+- SPA follows the MyEdSpace visual language, described in `web/DESIGN_SYSTEM.md` (ADR 016)
 
 ## Open decisions
 
