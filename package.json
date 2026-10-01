@@ -1,0 +1,19 @@
+{
+  "name": "myedspace-assignment",
+  "private": true,
+  "workspaces": [
+    "api",
+    "web",
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "build": "npm run build -w api && npm run build -w web",
+    "test": "npm test -w api && npm test -w web"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
+  }
+}

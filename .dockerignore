@@ -1,0 +1,12 @@
+.git
+**/node_modules
+**/dist
+**/coverage
+api/src/generated
+**/.env
+**/.env.*
+!.env.example
+.planning
+.claude
+task.txt
+**/*.tsbuildinfo
