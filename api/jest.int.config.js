@@ -2,9 +2,10 @@
 module.exports = {
   rootDir: 'src',
   testEnvironment: 'node',
-  testRegex: '.*\\.spec\\.ts$',
-  // Integration tests need Docker and run through jest.int.config.js (npm run test:int).
-  testPathIgnorePatterns: ['/node_modules/', '\\.int\\.spec\\.ts$'],
+  testRegex: '.*\\.int\\.spec\\.ts$',
   transform: { '^.+\\.ts$': 'ts-jest' },
   moduleFileExtensions: ['ts', 'js', 'json'],
+  globalSetup: '<rootDir>/testing/global-setup.ts',
+  globalTeardown: '<rootDir>/testing/global-teardown.ts',
+  testTimeout: 30_000,
 };

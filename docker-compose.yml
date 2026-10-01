@@ -24,10 +24,10 @@ services:
       timeout: 3s
       retries: 15
 
-  # One-shot: applies migrations (and, from slice 1, seed data), then exits.
+  # One-shot: applies migrations and seed data, then exits.
   migrate:
     <<: *api-image
-    command: ["npx", "prisma", "migrate", "deploy"]
+    command: ["sh", "-c", "npx prisma migrate deploy && node dist/seed/run"]
     environment:
       <<: *database-url
     depends_on:

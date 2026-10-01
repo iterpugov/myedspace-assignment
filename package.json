@@ -11,7 +11,8 @@
   },
   "scripts": {
     "build": "npm run build -w api && npm run build -w web",
-    "test": "npm test -w api && npm test -w web"
+    "test": "npm test -w api && npm test -w web",
+    "test:int": "npm run test:int -w api"
   },
   "devDependencies": {
     "typescript": "5.9.3"

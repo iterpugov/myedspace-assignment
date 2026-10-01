@@ -7,3 +7,11 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Course {
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subject    String @unique
+  yearFrom   Int
+  yearTo     Int
+  pricePence Int
+}

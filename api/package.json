@@ -10,8 +10,11 @@
     "start:dev": "nest start --watch",
     "pretest": "npm run prisma:generate",
     "test": "jest",
+    "pretest:int": "npm run prisma:generate",
+    "test:int": "jest --config jest.int.config.js --runInBand",
     "db:dev": "docker run --rm -d --name mes-dev-db -e POSTGRES_USER=mes -e POSTGRES_PASSWORD=mes -e POSTGRES_DB=mes -p 54329:5432 postgres:17-alpine",
-    "db:dev:stop": "docker stop mes-dev-db"
+    "db:dev:stop": "docker stop mes-dev-db",
+    "seed": "node dist/seed/run"
   },
   "dependencies": {
     "@nestjs/common": "^11.2.7",
@@ -28,9 +31,13 @@
     "@nestjs/cli": "^11.0.24",
     "@nestjs/schematics": "^11.1.0",
     "@nestjs/testing": "^11.2.7",
+    "@testcontainers/postgresql": "12.2.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.20.4",
+    "@types/supertest": "^7.2.1",
     "jest": "^29.7.0",
+    "supertest": "^7.3.0",
+    "testcontainers": "12.2.0",
     "ts-jest": "^29.4.14"
   }
 }
