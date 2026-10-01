@@ -24,6 +24,10 @@ the decision; it records the call, it does not make it.
 | 015 | [Toolchain versions are pinned to the last proven majors](015-toolchain-versions.md) | accepted | 2026-10-01 |
 | 016 | [The SPA follows the MyEdSpace visual language, described as a design system](016-mes-visual-language.md) | accepted | 2026-10-02 |
 | 017 | [Catalogue contract: UUID course ids, price in pence, selection in the URL](017-catalogue-contract.md) | accepted | 2026-10-02 |
+| 018 | [Requests are validated with class-validator and a global ValidationPipe](018-request-validation.md) | accepted | 2026-10-02 |
+| 019 | [An activation code row carries its own course and year](019-activation-code-is-self-contained.md) | accepted | 2026-10-02 |
+| 020 | [The plain activation code lives only in the response and the browser tab](020-handling-the-activation-code.md) | accepted | 2026-10-02 |
+| 021 | [Activation codes are issued before the order is saved, in separate transactions](021-codes-issued-before-the-order.md) | accepted | 2026-10-02 |
 
 ## Format
 

@@ -11,8 +11,9 @@ The time box is 3–4 hours.
 Checkout is guest-only. The parent enters their name and email, which are stored on the
 order. The student is the only role that logs in.
 
-The student access path (PUR-4) is shown on the order confirmation page and written to the
-API log as a stand-in for the email a real system would send.
+The student access path (PUR-4) is shown on the order confirmation page, which stands in
+for the email a real system would send. It is not written to the API log (amended by
+[ADR 020](020-handling-the-activation-code.md)).
 
 ## Alternatives considered
 - Parent account with login — adds a second role, a second login flow and guards

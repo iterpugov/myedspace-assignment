@@ -44,5 +44,9 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 015 | NestJS 11, Prisma 7.10.0 (exact; fallback 6.19.3), TypeScript 5.9.3, `node:22-slim` | [015](adr/015-toolchain-versions.md) |
 | 016 | SPA follows the MyEdSpace visual language; design system described in `web/DESIGN_SYSTEM.md`; no MES assets | [016](adr/016-mes-visual-language.md) |
 | 017 | Course id is a database UUID; price in integer pence; course and year travel to checkout in the query string | [017](adr/017-catalogue-contract.md) |
+| 018 | Request bodies are `class-validator` DTOs behind a global `ValidationPipe`; 400 for shape, 422 for business rules | [018](adr/018-request-validation.md) |
+| 019 | An activation code row stores its own `courseId` and `year`; `activation` never calls `checkout` | [019](adr/019-activation-code-is-self-contained.md) |
+| 020 | The plain code is never logged; confirmation gets it through router state; the link carries it in the URL fragment | [020](adr/020-handling-the-activation-code.md) |
+| 021 | `checkout` and `activation` share no transaction: codes are issued first, then payment, then the order; an orphan code is harmless | [021](adr/021-codes-issued-before-the-order.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
