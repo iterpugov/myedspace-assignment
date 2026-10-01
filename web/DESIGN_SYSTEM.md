@@ -1,7 +1,7 @@
 # Design system
 
 The SPA follows the visual language of the public MyEdSpace course pages: a vivid blue,
-a lime call to action, square corners and a pixel-block motif. This file is the single
+a lime call to action, square corners and stepped "notch" corners. This file is the single
 description of that language; the tokens live in `src/index.css` and the primitives in
 `src/ui/`.
 
@@ -16,20 +16,20 @@ file, photographs or review widgets.
    primary action on a screen. Everything else is white, lavender or ink.
 3. **Big, tight headings; calm body text.** Headings are large, bold and blue (or white
    on blue). Body text is regular weight and near-black.
-4. **Pixels as decoration.** Square blocks on a fixed grid break up large surfaces and
-   form the transition between sections. They never carry meaning.
+4. **Phone first.** Every page is usable at 360px wide; wider screens add columns, not
+   content.
 
 ## Colour tokens
 
 | Token | Value | Use |
 |---|---|---|
 | `brand` | `#3333FF` | Hero and header background, headings on white, links, borders of outline controls |
-| `brand-deep` | `#1C19E4` | Decorative squares on blue |
-| `brand-strip` | `#2925F1` | Panels sitting on a blue background (stat strip) |
+| `brand-deep` | `#1C19E4` | Pressed and hover state of blue surfaces |
+| `brand-strip` | `#2925F1` | Panels sitting on a blue background |
 | `brand-soft` | `#6765F3` | Secondary headings and helper text in blue |
 | `accent` | `#B1DB00` | Primary button background |
 | `sky` | `#A4E1EF` | Alternate section background, eyebrow text on blue |
-| `sky-light` | `#B4E6F3` | Decorative squares on sky |
+| `sky-light` | `#B4E6F3` | Hover state of sky surfaces |
 | `surface` | `#FFFFFF` | Page and form background |
 | `surface-tint` | `#F1F0FF` | Cards, decorative squares on white |
 | `ink` | `#1D1E22` | Body text, text on lime |
@@ -60,8 +60,9 @@ is the open substitute.
 
 - Content width: 1200px maximum, centred, with 24px side padding (16px on small screens).
 - Spacing follows a 4px base; sections are separated by 96px, blocks inside a section by 32px.
-- The pixel grid unit is 56px; decorative squares are one unit.
 - Forms are a single column, at most 560px wide.
+- Below 768px everything is one column: course cards stack, the header navigation wraps
+  under the wordmark, and controls are at least 44px tall.
 
 ## Shape and decoration
 
@@ -69,9 +70,6 @@ is the open substitute.
 - **Notch:** primary buttons and cards have a stepped corner — a small square (8px on
   buttons, 16px on cards) cut from the bottom-left and top-right, as if the shape were two
   offset rectangles. Implemented with `clip-path`, one utility class.
-- **Pixel divider:** a strip of squares on the grid at the boundary between a blue section
-  and a white one. One component with a fixed pattern; decorative, hidden from assistive
-  technology.
 - **Shadows:** none, except a light one on cards that sit on `sky`.
 
 ## Components
@@ -85,19 +83,21 @@ is the open substitute.
 | `Field` | Label above, square input 48px tall with a 1px `line` border; border turns `brand` on focus and `danger` on error; error text below in `danger` |
 | `Select` | Same look as `Field`; used for the year |
 | `Steps` | Row of equal segments, filled in `brand` up to the current step, with a "n of m steps" caption |
-| `Stat` | Large number over a short caption, white on `brand-strip` |
 | `Notice` | Bordered message block: `info` (brand) and `error` (danger) |
-| `PixelDivider` | The section transition described above |
 
 ## Accessibility
 
 - Text contrast: `ink` on white, lime, sky and lavender, and white on blue, all meet
   WCAG AA for the sizes used. `brand-soft` is used only for large text.
 - Every control has a visible focus ring (2px `ink` outline on lime, 2px white on blue,
-  2px `brand` elsewhere).
-- Decorative squares and dividers are `aria-hidden`.
+  2px `brand` elsewhere). On notched shapes the ring is drawn inside the edge, because the
+  notch clips anything outside the box.
 
 ## Not reproduced
 
 Marketing sections of the real site — review carousels, curriculum sliders, teacher
-photography, the trust-score widgets — are outside the brief and are not built.
+photography, the trust-score widgets — are outside the brief and are not built. The
+pixel-block dividers and scattered squares of the real site are left out as well.
+
+Components are built when a page first needs them: slice 1 builds `PageShell`, `Header`,
+`Button`, `Card`, `Select` and `Notice`; `Field` and `Steps` arrive with the checkout.

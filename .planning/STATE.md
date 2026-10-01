@@ -7,9 +7,9 @@
 
 ## Phase
 
-Slice 0 (skeleton) is done: `docker compose up` starts `db`, `migrate`, `api` and `web`,
-and the SPA shows the API health check that reached PostgreSQL. Next is slice 1
-(design foundation, catalogue and product page), full pipeline starting with `planner`.
+Slice 1 (design foundation, catalogue and product page) in progress, full pipeline. The
+plan is `plans/PLAN_slice-1-catalogue.md`; its decisions D1–D3 are ADR 017 and its minor
+defaults M1–M13 are accepted, with the scope changes listed at the top of the plan.
 
 ## Decided
 
@@ -33,6 +33,7 @@ and the SPA shows the API health check that reached PostgreSQL. Next is slice 1
 - SPA tooling: Vite, React Router, TanStack Query, Tailwind, React Hook Form (ADR 014)
 - Toolchain: NestJS 11, Prisma 7.10.0, TypeScript 5.9.3 (ADR 015)
 - SPA follows the MyEdSpace visual language, described in `web/DESIGN_SYSTEM.md` (ADR 016)
+- Catalogue contract: UUID ids, pence, selection in the URL (ADR 017)
 
 ## Open decisions
 

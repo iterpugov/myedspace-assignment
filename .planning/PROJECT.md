@@ -43,5 +43,6 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 014 | SPA: Vite, React Router, TanStack Query, Tailwind CSS, React Hook Form | [014](adr/014-frontend-tooling.md) |
 | 015 | NestJS 11, Prisma 7.10.0 (exact; fallback 6.19.3), TypeScript 5.9.3, `node:22-slim` | [015](adr/015-toolchain-versions.md) |
 | 016 | SPA follows the MyEdSpace visual language; design system described in `web/DESIGN_SYSTEM.md`; no MES assets | [016](adr/016-mes-visual-language.md) |
+| 017 | Course id is a database UUID; price in integer pence; course and year travel to checkout in the query string | [017](adr/017-catalogue-contract.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
