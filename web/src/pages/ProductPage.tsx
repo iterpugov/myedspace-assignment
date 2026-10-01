@@ -3,19 +3,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { fetchCourses } from '../api/courses';
+import { formatPrice } from '../format-price';
 import { Button } from '../ui/Button';
 import { ChoiceCard } from '../ui/ChoiceCard';
 import { Notice } from '../ui/Notice';
 import { PageShell } from '../ui/PageShell';
 import { Select } from '../ui/Select';
-
-function formatPrice(pricePence: number): string {
-  return new Intl.NumberFormat('en-GB', {
-    style: 'currency',
-    currency: 'GBP',
-    minimumFractionDigits: pricePence % 100 === 0 ? 0 : 2,
-  }).format(pricePence / 100);
-}
 
 function yearsOf(course: CourseResponse): number[] {
   return Array.from({ length: course.yearTo - course.yearFrom + 1 }, (_, index) => course.yearFrom + index);

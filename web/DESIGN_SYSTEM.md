@@ -102,8 +102,8 @@ photography, the trust-score widgets — are outside the brief and are not built
 pixel-block dividers and scattered squares of the real site are left out as well.
 
 Components are built when a page first needs them: slice 1 builds `PageShell`, `Header`,
-`Button` (primary), `TextLink`, `ChoiceCard`, `Select` and `Notice`; `Card`, `Field`,
-`Steps` and the `outline` button arrive with the pages that use them.
+`Button` (primary), `TextLink`, `ChoiceCard`, `Select` and `Notice`; slice 2 adds `Card`
+and `Field`. `Steps` and the `outline` button arrive with the pages that use them.
 
 Only the colours in the table above exist in the Tailwind theme — the default palette is
 switched off, so an undocumented colour does not compile.
