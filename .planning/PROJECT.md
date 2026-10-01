@@ -2,7 +2,7 @@
 
 A mock of the MES core user journey — parent purchases, student onboards, student accesses
 the LMS — built to show system structure, technical decisions and pragmatic use of AI
-tooling. Full brief: [`../task.txt`](../task.txt).
+tooling. The full brief is `task.txt`, kept locally and not committed.
 
 ## Constraints (from the brief)
 

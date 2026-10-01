@@ -1,6 +1,6 @@
 # REQUIREMENTS
 
-Requirements taken from the brief ([`../task.txt`](../task.txt)), with IDs for plans, tests
+Requirements taken from the brief (`task.txt`, kept locally and not committed), with IDs for plans, tests
 and commits to reference. Nothing here is a design decision.
 
 Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed or descoped (say why).

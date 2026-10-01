@@ -2,7 +2,7 @@
 
 A small web app that mocks the MES core journey: parent purchases → student onboards →
 student accesses the LMS. Time-boxed to 3–4 hours; clarity and pragmatism over completeness.
-The brief is in `task.txt`.
+The brief is in `task.txt`, a local file that is not committed.
 
 ## Read before starting work
 
