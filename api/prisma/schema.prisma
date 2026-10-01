@@ -9,9 +9,46 @@ datasource db {
 }
 
 model Course {
-  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  subject    String @unique
+  id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  subject    String      @unique
   yearFrom   Int
   yearTo     Int
   pricePence Int
+  seats      OrderSeat[]
+}
+
+model Order {
+  id               String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  parentName       String
+  parentEmail      String
+  totalPence       Int
+  paymentReference String
+  createdAt        DateTime    @default(now()) @db.Timestamptz(3)
+  seats            OrderSeat[]
+}
+
+/// Owned by the checkout module. The foreign key to Course guards integrity while both
+/// live in one database; checkout code reads courses only through CatalogueService.
+model OrderSeat {
+  id         String @id @db.Uuid
+  orderId    String @db.Uuid
+  order      Order  @relation(fields: [orderId], references: [id])
+  courseId   String @db.Uuid
+  course     Course @relation(fields: [courseId], references: [id])
+  year       Int
+  pricePence Int
+
+  @@index([orderId])
+}
+
+/// Owned by the activation module. Deliberately has no foreign keys: a code is
+/// written before its order seat exists (ADR 021) and carries its own course and
+/// year (ADR 019).
+model ActivationCode {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codeHash  String   @unique
+  seatId    String   @unique @db.Uuid
+  courseId  String   @db.Uuid
+  year      Int
+  createdAt DateTime @default(now()) @db.Timestamptz(3)
 }
