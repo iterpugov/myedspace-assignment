@@ -7,6 +7,14 @@
 > Scope changes against the text below: no `PixelDivider` and no `Stat`; the header keeps
 > its navigation; every page must work on a phone; one `typescript-reviewer` run covers
 > API and web together.
+>
+> **Changes made during implementation:** seed data is one TypeScript module per course
+> under `api/src/seed/data/`, with the logic in `seed/index.ts` and the entry point
+> `seed/run.ts` (`node dist/seed/run`), instead of a single `src/seed.ts`. One
+> `PlaceholderPage` serves `/checkout`, `/login` ("Sign in" is in the header navigation)
+> and unknown routes, instead of `CheckoutPage.tsx`. `ChoiceCard` and `TextLink` were
+> built; `Card` is deferred. After review, the price and year-range assertions in the
+> product page test were scoped to each course card.
 
 Slice 1 adds the `Course` table with its seed, a read-only `catalogue` module behind `GET /api/courses`, the first Testcontainers integration test, the design foundation from `web/DESIGN_SYSTEM.md`, and a product page where the parent picks a course and a year from its range. Three decisions need your call before code (section 2). The 55-minute estimate is not realistic with the full pipeline; section 6 gives a lean cut.
 

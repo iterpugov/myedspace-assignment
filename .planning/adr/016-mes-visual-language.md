@@ -9,7 +9,8 @@ have produced six screens styled ad hoc.
 
 ## Decision
 The SPA reproduces the visual language of the public MyEdSpace course pages: brand blue,
-a lime primary action, square corners, large tight headings and the pixel-block motif.
+a lime primary action, square corners with a stepped notch, and large tight headings.
+The pixel-block dividers of the real site were dropped during slice 1 to save time.
 
 The language is written down in [`web/DESIGN_SYSTEM.md`](../../web/DESIGN_SYSTEM.md):
 tokens, typography, layout, shapes and a small set of components. Tokens are defined once

@@ -7,8 +7,8 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 ## Parent purchase flow
 
-- [ ] **PUR-1** Parent lands on a product page
-- [ ] **PUR-2** Parent selects a course
+- [x] **PUR-1** Parent lands on a product page
+- [x] **PUR-2** Parent selects a course
 - [ ] **PUR-3** Parent completes a mock checkout (no real payment integration)
 - [ ] **PUR-4** After purchase, the system generates a student access path (e.g. invitation link)
 
@@ -28,8 +28,8 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 ## Catalogue data (provided)
 
-- [ ] **CAT-1** A course has subject, year and price
-- [ ] **CAT-2** Sample courses: Maths (Year 5–13, £199), English (Year 5–13, £199),
+- [x] **CAT-1** A course has subject, year and price
+- [x] **CAT-2** Sample courses: Maths (Year 5–13, £199), English (Year 5–13, £199),
   Science (Year 5–11, £199)
 
 ## Technical

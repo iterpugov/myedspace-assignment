@@ -7,9 +7,13 @@
 
 ## Phase
 
-Slice 1 (design foundation, catalogue and product page) in progress, full pipeline. The
-plan is `plans/PLAN_slice-1-catalogue.md`; its decisions D1–D3 are ADR 017 and its minor
-defaults M1–M13 are accepted, with the scope changes listed at the top of the plan.
+Slices 0 and 1 are done: the product page lists the seeded courses and hands the chosen
+course and year to `/checkout`, which is still a placeholder. Next is slice 2 (checkout
+and activation code), full pipeline with `security-reviewer`, starting with `planner`.
+
+Carried into slice 2 from the slice 1 reviews:
+- The API request-validation mechanism is undecided (needed for `courseId` and `year`).
+- The integration harness needs a database reset helper once tests start writing rows.
 
 ## Decided
 
