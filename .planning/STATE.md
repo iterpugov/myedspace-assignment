@@ -7,9 +7,9 @@
 
 ## Phase
 
-Setup. Workflow files are in place; no application code yet. Product and technical
-decisions are recorded as ADR 001–014 and the roadmap slices are agreed; next is slice 0
-(skeleton).
+Slice 0 (skeleton) in progress. Decisions are recorded as ADR 001–015, the roadmap slices
+are agreed, and the plan is in `plans/PLAN_slice-0-skeleton.md` with its minor defaults
+M1–M11 accepted.
 
 ## Decided
 
@@ -31,6 +31,7 @@ decisions are recorded as ADR 001–014 and the roadmap slices are agreed; next 
 - Modular monolith on NestJS with five modules, no Java service (ADR 012)
 - Tests: Jest + Testcontainers for the API, Vitest + RTL for the SPA (ADR 013)
 - SPA tooling: Vite, React Router, TanStack Query, Tailwind, React Hook Form (ADR 014)
+- Toolchain: NestJS 11, Prisma 7.10.0, TypeScript 5.9.3 (ADR 015)
 
 ## Open decisions
 

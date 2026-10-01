@@ -21,6 +21,7 @@ the decision; it records the call, it does not make it.
 | 012 | [One NestJS backend as a modular monolith; no Java service](012-modular-monolith-no-java.md) | accepted | 2026-10-01 |
 | 013 | [Test strategy: Jest and Testcontainers for the API, Vitest for the SPA](013-test-strategy.md) | accepted | 2026-10-01 |
 | 014 | [Frontend tooling](014-frontend-tooling.md) | accepted | 2026-10-01 |
+| 015 | [Toolchain versions are pinned to the last proven majors](015-toolchain-versions.md) | accepted | 2026-10-01 |
 
 ## Format
 

@@ -41,5 +41,6 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 012 | Backend is a modular monolith on NestJS: `catalogue`, `checkout`, `activation`, `identity`, `lms`; modules talk through public services; no Java service | [012](adr/012-modular-monolith-no-java.md) |
 | 013 | API: Jest unit + integration against PostgreSQL via Testcontainers; SPA: Vitest + RTL for behaviour; no browser e2e | [013](adr/013-test-strategy.md) |
 | 014 | SPA: Vite, React Router, TanStack Query, Tailwind CSS, React Hook Form | [014](adr/014-frontend-tooling.md) |
+| 015 | NestJS 11, Prisma 7.10.0 (exact; fallback 6.19.3), TypeScript 5.9.3, `node:22-slim` | [015](adr/015-toolchain-versions.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
