@@ -15,6 +15,7 @@ model Course {
   yearTo     Int
   pricePence Int
   seats      OrderSeat[]
+  enrolments Enrolment[]
 }
 
 model Order {
@@ -45,10 +46,41 @@ model OrderSeat {
 /// written before its order seat exists (ADR 021) and carries its own course and
 /// year (ADR 019).
 model ActivationCode {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  codeHash           String    @unique
+  seatId             String    @unique @db.Uuid
+  courseId           String    @db.Uuid
+  year               Int
+  createdAt          DateTime  @default(now()) @db.Timestamptz(3)
+  /// Set once, by a conditional update: the single-use gate (ADR 022).
+  claimedByStudentId String?   @db.Uuid
+  /// Set after the enrolment exists. Claimed but not redeemed = to be resumed.
+  redeemedAt         DateTime? @db.Timestamptz(3)
+}
+
+/// Owned by the identity module.
+model Student {
+  id           String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  /// Stored lower-case, so the unique index makes usernames case-insensitive.
+  username     String      @unique
+  firstName    String
+  passwordHash String
+  createdAt    DateTime    @default(now()) @db.Timestamptz(3)
+  enrolments   Enrolment[]
+}
+
+/// Owned by the lms module.
+model Enrolment {
   id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  codeHash  String   @unique
-  seatId    String   @unique @db.Uuid
+  studentId String   @db.Uuid
+  student   Student  @relation(fields: [studentId], references: [id])
   courseId  String   @db.Uuid
+  course    Course   @relation(fields: [courseId], references: [id])
   year      Int
+  /// One enrolment per paid seat (ADR 009). No foreign key: the seat is checkout's.
+  seatId    String   @unique @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamptz(3)
+
+  /// One enrolment per course for a student (ADR 005).
+  @@unique([studentId, courseId])
 }

@@ -38,3 +38,27 @@ export interface CheckoutResponse {
   totalPence: number;
   seats: CheckoutSeatResponse[];
 }
+
+export interface ActivationRequest {
+  /** Activation code as shown to the parent; case and hyphens do not matter. */
+  code: string;
+  firstName: string;
+  username: string;
+  password: string;
+}
+
+/** The signed-in student; returned by POST /api/activations and GET /api/session. */
+export interface StudentResponse {
+  id: string;
+  username: string;
+  firstName: string;
+}
+
+export type ActivationFailureReason = 'code_invalid' | 'code_used' | 'username_taken';
+
+/** Body of a 409 or 422 from POST /api/activations. */
+export interface ActivationErrorResponse {
+  statusCode: number;
+  message: string;
+  reason: ActivationFailureReason;
+}

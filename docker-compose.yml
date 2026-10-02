@@ -39,6 +39,9 @@ services:
     environment:
       <<: *database-url
       PORT: "3000"
+      # Optional. Left empty, the API generates a random signing secret at start (ADR 024).
+      JWT_SECRET: ${JWT_SECRET:-}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
     depends_on:
       migrate:
         condition: service_completed_successfully

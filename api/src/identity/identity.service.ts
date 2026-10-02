@@ -1,0 +1,41 @@
+import { Injectable } from '@nestjs/common';
+import type { StudentResponse } from '@mes/contracts';
+import { isUniqueViolation } from '../prisma/prisma-errors';
+import { PrismaService } from '../prisma/prisma.service';
+import { UsernameTakenError } from './identity.errors';
+import { hashPassword } from './password';
+
+export interface NewStudent {
+  /** Already normalised: lower case, checked against the username rules. */
+  username: string;
+  password: string;
+  firstName: string;
+}
+
+const studentFields = { id: true, username: true, firstName: true } as const;
+
+@Injectable()
+export class IdentityService {
+  constructor(private readonly prisma: PrismaService) {}
+
+  /** Creates a student with a hashed password. Throws UsernameTakenError if the username exists. */
+  async register({ username, password, firstName }: NewStudent): Promise<StudentResponse> {
+    const passwordHash = await hashPassword(password);
+    try {
+      return await this.prisma.student.create({
+        data: { username, firstName, passwordHash },
+        select: studentFields,
+      });
+    } catch (error) {
+      // The unique index decides, not a read beforehand, so two racing requests cannot both win.
+      // `username` is the only unique column a new student can collide on.
+      if (isUniqueViolation(error)) throw new UsernameTakenError();
+      throw error;
+    }
+  }
+
+  async findById(id: string): Promise<StudentResponse | undefined> {
+    const student = await this.prisma.student.findUnique({ where: { id }, select: studentFields });
+    return student ?? undefined;
+  }
+}
