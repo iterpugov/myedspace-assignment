@@ -8,7 +8,8 @@ async function main(): Promise<void> {
   const prisma = new PrismaService();
   try {
     await seedCourses(prisma);
-    console.log(`Seeded ${courses.length} courses`);
+    const lessons = courses.reduce((count, course) => count + course.lessons.length, 0);
+    console.log(`Seeded ${courses.length} courses and ${lessons} lessons`);
   } finally {
     await prisma.$disconnect();
   }

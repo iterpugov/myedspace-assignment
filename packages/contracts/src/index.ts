@@ -62,3 +62,32 @@ export interface ActivationErrorResponse {
   message: string;
   reason: ActivationFailureReason;
 }
+
+export interface LoginRequest {
+  username: string;
+  password: string;
+}
+
+export interface LessonSummaryResponse {
+  id: string;
+  /** 1-based order within the course. */
+  position: number;
+  title: string;
+  summary: string;
+}
+
+/** A course the signed-in student is enrolled in, with its lessons in order. */
+export interface EnrolledCourseResponse {
+  courseId: string;
+  subject: string;
+  /** The year bought for this student; lessons do not differ by year (ADR 002). */
+  year: number;
+  lessons: LessonSummaryResponse[];
+}
+
+export interface LessonResponse extends LessonSummaryResponse {
+  courseId: string;
+  subject: string;
+  /** Plain text; paragraphs are separated by a blank line. */
+  body: string;
+}

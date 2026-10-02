@@ -16,6 +16,21 @@ model Course {
   pricePence Int
   seats      OrderSeat[]
   enrolments Enrolment[]
+  lessons    Lesson[]
+}
+
+/// Owned by the catalogue module (ADR 012). Belongs to a course, not to a year (ADR 002).
+model Lesson {
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  courseId String @db.Uuid
+  course   Course @relation(fields: [courseId], references: [id])
+  /// 1-based order within the course; the seed upserts on (courseId, position).
+  position Int
+  title    String
+  summary  String
+  body     String
+
+  @@unique([courseId, position])
 }
 
 model Order {
