@@ -2,7 +2,7 @@ import type { EnrolledCourseResponse, RedeemCodeResponse, RedemptionFailureReaso
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter, Route, Routes, useNavigate } from 'react-router';
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
 import { RequireSession } from '../RequireSession';
 import { deferredReply, json, requestsTo, sam, stubApi, unauthorized, type Reply } from '../test/api';
 import { AddCoursePage } from './AddCoursePage';
@@ -13,7 +13,10 @@ const activationCode = 'ABCDE-FGHJK-MNPQR';
 
 const CODE_INVALID = 'This activation code is not valid. Check it and try again.';
 const DUPLICATE =
-  'You already have this course. This purchase is a duplicate: ask your parent to contact us. The code has not been used.';
+  'You already have this course for this year. This purchase is a duplicate: ask your parent to contact us. The code has not been used.';
+/** Shown when the code came with the student from the activation link (ADR 029). */
+const CARRIED_NOTICE = /^The code from your link is filled in\. Press Add course to add it to Sam['’]s account\.$/;
+const WRONG_ACCOUNT = /Not Sam\? Sign out, then open your link again\./;
 
 const mathsId = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c01';
 const englishId = '0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c02';
@@ -69,18 +72,32 @@ function BackProbe() {
   );
 }
 
-/** The page is mounted the way the app mounts it: inside the session guard, next to the dashboard. */
-function renderAt(path: '/lms' | '/lms/add-course') {
+/** Stands in for the sign-in page, and shows the router state it was opened with. */
+function LoginProbe() {
+  const location = useLocation();
+  return (
+    <>
+      <p data-testid="login-page">Login page</p>
+      <output data-testid="login-state">{JSON.stringify(location.state)}</output>
+    </>
+  );
+}
+
+/**
+ * The page is mounted the way the app mounts it: inside the session guard, next to the
+ * dashboard. `state` is the router state of the entry, as the activation page leaves it.
+ */
+function renderAt(path: '/lms' | '/lms/add-course', state?: unknown) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={[path]}>
+      <MemoryRouter initialEntries={[state === undefined ? path : { pathname: path, state }]}>
         <Routes>
           <Route element={<RequireSession />}>
             <Route path="/lms" element={<LmsPage />} />
             <Route path="/lms/add-course" element={<AddCoursePage />} />
           </Route>
-          <Route path="/login" element={<p data-testid="login-page">Login page</p>} />
+          <Route path="/login" element={<LoginProbe />} />
         </Routes>
         <BackProbe />
       </MemoryRouter>
@@ -94,8 +111,8 @@ const codeField = () => screen.getByRole('textbox', { name: 'Activation code' })
 const submitButton = () => screen.getByRole('button', { name: 'Add course' });
 
 /** Opens the add-course page and waits until its form is there. */
-async function openAddCourse() {
-  renderAt('/lms/add-course');
+async function openAddCourse(state?: unknown) {
+  renderAt('/lms/add-course', state);
   await pageHeading();
 }
 
@@ -112,7 +129,122 @@ describe('AddCoursePage', () => {
     expect(codeField()).not.toHaveAttribute('aria-invalid', 'true');
     expect(submitButton()).toBeEnabled();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    // Nothing was carried from a link, so nothing says so.
+    expect(screen.queryByText(/The code from your link/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Sign out, then open your link again/)).not.toBeInTheDocument();
     expect(redemptionRequests(fetchMock)).toHaveLength(0);
+  });
+
+  describe('opened with a code carried in router state (ADR 029)', () => {
+    it('fills the field with the code, says so in a live notice that names the account, and sends no redemption until the student submits', async () => {
+      const fetchMock = stubAddCourseApi();
+
+      await openAddCourse({ activationCode });
+
+      expect(codeField()).toHaveValue(activationCode);
+      expect(codeField()).not.toHaveAttribute('aria-invalid', 'true');
+      expect(screen.getByRole('status')).toHaveTextContent(CARRIED_NOTICE);
+      expect(screen.getByText(WRONG_ACCOUNT)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(submitButton()).toBeEnabled();
+      // Only prefilled: the course is added when the student presses the button.
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('[S] takes the code out of the history entry once it is in the field: coming back to the page finds an empty form', async () => {
+      const user = userEvent.setup();
+      const fetchMock = stubAddCourseApi();
+      await openAddCourse({ activationCode });
+      expect(codeField()).toHaveValue(activationCode);
+
+      // Leaving by a link pushes a new entry; the add-course entry stays in history.
+      await user.click(screen.getByRole('link', { name: '← Back to my courses' }));
+      expect(await screen.findByRole('heading', { name: 'Welcome, Sam' })).toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Test: go back' }));
+
+      expect(await pageHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue('');
+      expect(screen.queryByText(/The code from your link/)).not.toBeInTheDocument();
+      expect(document.body).not.toHaveTextContent(activationCode);
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('keeps the prefilled field editable', async () => {
+      const user = userEvent.setup();
+      const fetchMock = stubAddCourseApi();
+      await openAddCourse({ activationCode });
+      expect(codeField()).toHaveValue(activationCode);
+
+      await user.clear(codeField());
+      await user.type(codeField(), 'ZZZZZ-ZZZZZ-ZZZZZ');
+
+      expect(codeField()).toHaveValue('ZZZZZ-ZZZZZ-ZZZZZ');
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('submitting the prefilled code sends exactly { code } and, after a 200, lands on the dashboard with the new course', async () => {
+      const user = userEvent.setup();
+      const fetchMock = stubAddCourseApi();
+      await openAddCourse({ activationCode });
+      expect(codeField()).toHaveValue(activationCode);
+
+      await user.click(submitButton());
+
+      expect(await screen.findByRole('heading', { name: 'English · Year 7' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Welcome, Sam' })).toBeInTheDocument();
+      expect(queryPageHeading()).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(1);
+      const [url, init] = redemptionRequests(fetchMock)[0];
+      expect(url).toBe('/api/redemptions');
+      expect(JSON.parse(String(init?.body))).toEqual({ code: activationCode });
+      // The code is a secret (ADR 020): nothing on the dashboard repeats it.
+      expect(document.body).not.toHaveTextContent(activationCode);
+    });
+
+    it.each<[string, unknown]>([
+      ['a code that is a number', { activationCode: 123456789012345 }],
+      ['a code that is an array', { activationCode: [activationCode] }],
+      ['a code under another key', { code: activationCode }],
+      ['a bare string', activationCode],
+      ['a code longer than 64 characters', { activationCode: 'A'.repeat(65) }],
+      ['an empty code', { activationCode: '' }],
+    ])('ignores state holding %s: the field is empty and nothing mentions a link', async (_case, state) => {
+      const fetchMock = stubAddCourseApi();
+
+      await openAddCourse(state);
+
+      expect(codeField()).toHaveValue('');
+      expect(screen.queryByText(/The code from your link/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Sign out, then open your link again/)).not.toBeInTheDocument();
+      expect(screen.queryByRole('status')).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('[S] with no session ends on /login, and the sign-in page receives no state: the code is not carried through sign-in', async () => {
+      const fetchMock = stubApi({ 'GET /api/session': unauthorized });
+
+      renderAt('/lms/add-course', { activationCode });
+
+      expect(await screen.findByTestId('login-page')).toBeInTheDocument();
+      expect(screen.getByTestId('login-state')).toHaveTextContent(/^null$/);
+      expect(document.body).not.toHaveTextContent(activationCode);
+      expect(queryPageHeading()).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Activation code' })).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('shows the duplicate notice and keeps the prefilled code after 409 course_already_owned', async () => {
+      const user = userEvent.setup();
+      const fetchMock = stubAddCourseApi(refused(409, 'course_already_owned'));
+      await openAddCourse({ activationCode });
+
+      await user.click(submitButton());
+
+      expect(await screen.findByRole('alert')).toHaveTextContent(DUPLICATE);
+      expect(codeField()).toHaveValue(activationCode);
+      expect(redemptionRequests(fetchMock)).toHaveLength(1);
+      expect(queryPageHeading()).toBeInTheDocument();
+    });
   });
 
   it('has a "← Back to my courses" link to /lms', async () => {

@@ -1,6 +1,9 @@
 // The same shape the API enforces; here it only saves a round trip.
 const NORMALISED_CODE = /^[A-HJ-NP-Z2-9]{15}$/;
 
+/** Longest value accepted where a code enters the SPA; a real code with hyphens is 17 characters. */
+export const CODE_INPUT_MAX_LENGTH = 64;
+
 export const CODE_REQUIRED = 'Enter your activation code';
 export const CODE_INVALID = 'This activation code is not valid. Check it and try again.';
 

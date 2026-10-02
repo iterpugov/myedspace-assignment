@@ -1,10 +1,13 @@
 import type { ActivationFailureReason, StudentResponse } from '@mes/contracts';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { SESSION_KEY } from '../api/session';
 import { RequireSession } from '../RequireSession';
+import { deferredReply } from '../test/api';
 import { ActivatePage } from './ActivatePage';
+import { AddCoursePage } from './AddCoursePage';
 import { LmsPage } from './LmsPage';
 
 const activationCode = 'ABCDE-FGHJK-MNPQR';
@@ -29,13 +32,25 @@ const refused =
   () =>
     json({ statusCode: status, message: 'Request failed', ...(reason ? { reason } : {}) }, status);
 
+const unauthorized = () => json({ statusCode: 401, message: 'Unauthorized' }, 401);
+
+interface SessionStub {
+  /** A student is signed in before the page opens. */
+  signedIn?: boolean;
+  /** The answer to the first GET /api/session only; later ones behave like the real API. */
+  firstSessionReply?: ActivationReply;
+}
+
 /**
  * POST /api/activations answers as the test says. GET /api/session behaves like the real
- * API: 401 until an activation has succeeded, then the student. GET /api/lms/courses is what
- * the dashboard asks for once the student lands on /lms; it answers with no courses.
+ * API: 401 until an activation has succeeded (or from the start, if the test says a student
+ * is signed in), then the student. GET /api/lms/courses is what the dashboard asks for once
+ * the student lands on /lms; it answers with no courses. Nothing else is expected: a
+ * redemption request rejects.
  */
-function stubApi(activationReply: ActivationReply = created) {
-  let signedIn = false;
+function stubApi(activationReply: ActivationReply = created, session: SessionStub = {}) {
+  let signedIn = session.signedIn ?? false;
+  let firstSessionReply = session.firstSessionReply;
   const fetchMock = vi.fn(async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
     const method = (init?.method ?? 'GET').toUpperCase();
     if (input === '/api/activations' && method === 'POST') {
@@ -44,10 +59,15 @@ function stubApi(activationReply: ActivationReply = created) {
       return response;
     }
     if (input === '/api/session' && method === 'GET') {
-      return signedIn ? json(sam) : json({ statusCode: 401, message: 'Unauthorized' }, 401);
+      if (firstSessionReply) {
+        const reply = firstSessionReply;
+        firstSessionReply = undefined;
+        return reply();
+      }
+      return signedIn ? json(sam) : unauthorized();
     }
     if (input === '/api/lms/courses' && method === 'GET') {
-      return signedIn ? json([]) : json({ statusCode: 401, message: 'Unauthorized' }, 401);
+      return signedIn ? json([]) : unauthorized();
     }
     throw new Error(`Unexpected request: ${method} ${String(input)}`);
   });
@@ -55,11 +75,14 @@ function stubApi(activationReply: ActivationReply = created) {
   return fetchMock;
 }
 
-function activationRequests(fetchMock: ReturnType<typeof stubApi>) {
-  return fetchMock.mock.calls.filter(([input]) => input === '/api/activations');
-}
+type ApiStub = ReturnType<typeof stubApi>;
 
-/** Shows the router's current address, and lets a test step back in history. */
+const requestsTo = (fetchMock: ApiStub, path: string) => fetchMock.mock.calls.filter(([input]) => input === path);
+const activationRequests = (fetchMock: ApiStub) => requestsTo(fetchMock, '/api/activations');
+const redemptionRequests = (fetchMock: ApiStub) => requestsTo(fetchMock, '/api/redemptions');
+const sessionRequests = (fetchMock: ApiStub) => requestsTo(fetchMock, '/api/session');
+
+/** Shows the router's current address on every route, and lets a test step back in history. */
 function LocationProbe() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -73,40 +96,61 @@ function LocationProbe() {
   );
 }
 
-function renderActivate(...initialEntries: string[]) {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+const newQueryClient = () => new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+/**
+ * The routes the app has around the activation page. /lms/add-course is there so that a
+ * redirect to it, wanted or not, is visible.
+ */
+function renderActivateWith(queryClient: QueryClient, ...initialEntries: string[]) {
   render(
     <QueryClientProvider client={queryClient}>
       <MemoryRouter initialEntries={initialEntries} initialIndex={initialEntries.length - 1}>
         <Routes>
           <Route path="/" element={<p data-testid="product-page">Product page</p>} />
-          <Route
-            path="/activate"
-            element={
-              <>
-                <ActivatePage />
-                <LocationProbe />
-              </>
-            }
-          />
+          <Route path="/activate" element={<ActivatePage />} />
           <Route element={<RequireSession />}>
             <Route path="/lms" element={<LmsPage />} />
+            <Route path="/lms/add-course" element={<AddCoursePage />} />
           </Route>
           <Route path="/login" element={<p data-testid="login-page">Login page</p>} />
         </Routes>
+        <LocationProbe />
       </MemoryRouter>
     </QueryClientProvider>,
   );
 }
 
+function renderActivate(...initialEntries: string[]) {
+  renderActivateWith(newQueryClient(), ...initialEntries);
+}
+
 const address = () => screen.getByTestId('location').textContent;
 const codeField = () => screen.getByRole('textbox', { name: 'Activation code' });
+const queryFormHeading = () => screen.queryByRole('heading', { name: 'Activate your course' });
+const addCourseHeading = () => screen.findByRole('heading', { level: 1, name: /^Add a course to Sam['’]s account$/ });
+const queryAddCourseHeading = () => screen.queryByRole('heading', { name: /^Add a course to / });
 const firstNameField = () => screen.getByRole('textbox', { name: 'First name' });
 const usernameField = () => screen.getByRole('textbox', { name: 'Username' });
 // Password inputs have no textbox role, so they are found by their label.
 const passwordField = () => screen.getByLabelText('Password');
 const repeatPasswordField = () => screen.getByLabelText('Repeat password');
 const submitButton = () => screen.getByRole('button', { name: 'Create account' });
+
+/**
+ * The onboarding form appears only once the session request has been answered (ADR 029);
+ * by then the fragment is gone from the address.
+ */
+async function formShown() {
+  await screen.findByRole('heading', { name: 'Activate your course' });
+  await waitFor(() => expect(address()).toBe('/activate'));
+}
+
+/** Opens the activation page without a session and waits until its form is there. */
+async function openForm(...initialEntries: string[]) {
+  renderActivate(...initialEntries);
+  await formShown();
+}
 
 interface FormValues {
   code?: string;
@@ -156,17 +200,16 @@ describe('ActivatePage', () => {
 
     renderActivate(activateLink);
 
-    expect(screen.getByRole('heading', { name: 'Activate your course' })).toBeInTheDocument();
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await formShown();
+    expect(address()).toBe('/activate');
     expect(codeField()).toHaveValue(activationCode);
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(activationRequests(fetchMock)).toHaveLength(0);
   });
 
   it('replaces the history entry, so Back does not return to an address holding the code (ADR 020)', async () => {
     const user = userEvent.setup();
     stubApi();
-    renderActivate('/', activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm('/', activateLink);
 
     await user.click(screen.getByRole('button', { name: 'Test: go back' }));
 
@@ -177,9 +220,8 @@ describe('ActivatePage', () => {
     const user = userEvent.setup();
     stubApi();
 
-    renderActivate('/activate');
+    await openForm('/activate');
 
-    expect(screen.getByRole('heading', { name: 'Activate your course' })).toBeInTheDocument();
     expect(codeField()).toHaveValue('');
     expect(firstNameField()).toHaveValue('');
     expect(usernameField()).toHaveValue('');
@@ -197,8 +239,7 @@ describe('ActivatePage', () => {
   it('tells a student who already has an account to sign in and add the code there, with a plain link to /login (ADR 027)', async () => {
     const fetchMock = stubApi();
 
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     // Before any submit the only "Sign in" link in the page body is the one in this sentence.
     const signIn = within(screen.getByRole('main')).getByRole('link', { name: 'Sign in' });
@@ -208,13 +249,13 @@ describe('ActivatePage', () => {
     );
     // The sentence is not part of the form: it is there before and after any attempt.
     expect(signInLinkInForm('query')).not.toBeInTheDocument();
-    expect(fetchMock).not.toHaveBeenCalled();
+    expect(activationRequests(fetchMock)).toHaveLength(0);
   });
 
   it('shows a required error under each field and sends no request when submitted empty', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate('/activate');
+    await openForm('/activate');
 
     await user.click(submitButton());
 
@@ -234,8 +275,7 @@ describe('ActivatePage', () => {
   it('treats a first name of spaces only as missing and sends no request', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user, { firstName: '   ' });
     await user.click(submitButton());
@@ -253,8 +293,7 @@ describe('ActivatePage', () => {
   ])('shows the username rule and sends no request for a username with %s', async (_case, username) => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user, { username });
     await user.click(submitButton());
@@ -268,8 +307,7 @@ describe('ActivatePage', () => {
   it('shows "Use at least 8 characters" and sends no request for a 7-character password', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user, { password: 'seven77' });
     await user.click(submitButton());
@@ -283,8 +321,7 @@ describe('ActivatePage', () => {
   it('shows "The passwords do not match" and sends no request when the repeat differs', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user, { repeatPassword: `${fakePassword}-typo` });
     await user.click(submitButton());
@@ -299,8 +336,7 @@ describe('ActivatePage', () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
     const spacedPassword = ` ${fakePassword} `;
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user, { firstName: '  Sam ', username: ' Sam_07 ', password: spacedPassword });
     await user.click(submitButton());
@@ -321,7 +357,7 @@ describe('ActivatePage', () => {
   it('sends a code typed by hand trimmed but otherwise as typed', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi();
-    renderActivate('/activate');
+    await openForm('/activate');
 
     await fillForm(user, { code: ' abcde-fghjk-mnpqr ' });
     await user.click(submitButton());
@@ -336,16 +372,21 @@ describe('ActivatePage', () => {
     });
   });
 
-  it('takes the student to /lms with a welcome by first name after a 201 (ONB-3, ONB-4)', async () => {
+  it('takes the student to /lms, not to /lms/add-course, with a welcome by first name after a 201 (ONB-3, ONB-4, ADR 029)', async () => {
     const user = userEvent.setup();
-    stubApi(created);
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    const fetchMock = stubApi(created);
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
 
     expect(await screen.findByRole('heading', { name: 'Welcome, Sam' })).toBeInTheDocument();
+    // The page has just put a student into the session cache; that must not send the
+    // student to "Add a course" with the code they have used.
+    expect(address()).toBe('/lms');
+    expect(queryAddCourseHeading()).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: 'Activation code' })).not.toBeInTheDocument();
+    expect(redemptionRequests(fetchMock)).toHaveLength(0);
     expect(screen.queryByRole('button', { name: /creat/i })).not.toBeInTheDocument();
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
     expect(document.body).not.toHaveTextContent(activationCode);
@@ -354,8 +395,7 @@ describe('ActivatePage', () => {
   it('shows "That username is taken" under the username, keeps the values and re-enables the button after 409 username_taken', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi(refused(409, 'username_taken'));
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -374,8 +414,7 @@ describe('ActivatePage', () => {
   it('clears the "username is taken" error as soon as the username is edited', async () => {
     const user = userEvent.setup();
     stubApi(refused(409, 'username_taken'));
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
     await fillForm(user);
     await user.click(submitButton());
     await waitFor(() => expect(usernameField()).toHaveAttribute('aria-invalid', 'true'));
@@ -391,7 +430,7 @@ describe('ActivatePage', () => {
     async (malformed) => {
       const user = userEvent.setup();
       const fetchMock = stubApi();
-      renderActivate('/activate');
+      await openForm('/activate');
       await fillForm(user);
       await user.clear(codeField());
       await user.type(codeField(), malformed);
@@ -406,8 +445,7 @@ describe('ActivatePage', () => {
   it('shows "This activation code is not valid" under the code field after 422 code_invalid', async () => {
     const user = userEvent.setup();
     const fetchMock = stubApi(refused(422, 'code_invalid'));
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -427,8 +465,7 @@ describe('ActivatePage', () => {
   it('shows an alert and a "Sign in" link to /login after 409 code_used', async () => {
     const user = userEvent.setup();
     stubApi(refused(409, 'code_used'));
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -444,8 +481,7 @@ describe('ActivatePage', () => {
   it('shows "Check the details and try again." after a 400', async () => {
     const user = userEvent.setup();
     stubApi(refused(400));
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -468,8 +504,7 @@ describe('ActivatePage', () => {
   ])('shows the generic alert, keeps the values and re-enables the button after %s', async (_case, reply) => {
     const user = userEvent.setup();
     const fetchMock = stubApi(reply);
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -491,8 +526,7 @@ describe('ActivatePage', () => {
       respond = resolve;
     });
     const fetchMock = stubApi(() => pending);
-    renderActivate(activateLink);
-    await waitFor(() => expect(address()).toBe('/activate'));
+    await openForm(activateLink);
 
     await fillForm(user);
     await user.click(submitButton());
@@ -505,5 +539,159 @@ describe('ActivatePage', () => {
 
     respond(json(sam, 201));
     expect(await screen.findByRole('heading', { name: 'Welcome, Sam' })).toBeInTheDocument();
+  });
+
+  describe('the session decides what the link opens (ADR 029)', () => {
+    it('asks for the session once before showing the form to a visitor who is not signed in', async () => {
+      const fetchMock = stubApi();
+
+      await openForm(activateLink);
+
+      expect(sessionRequests(fetchMock)).toHaveLength(1);
+      expect(codeField()).toHaveValue(activationCode);
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+    });
+
+    it('shows "Loading…" and no form while the session request is pending, with the fragment already removed; a 401 then shows the form with the code', async () => {
+      const session = deferredReply();
+      const fetchMock = stubApi(created, { firstSessionReply: session.reply });
+
+      renderActivate(activateLink);
+
+      await waitFor(() => expect(address()).toBe('/activate'));
+      await waitFor(() => expect(sessionRequests(fetchMock)).toHaveLength(1));
+      expect(screen.getByText('Loading…')).toBeInTheDocument();
+      expect(queryFormHeading()).not.toBeInTheDocument();
+      expect(screen.queryByRole('textbox', { name: 'Activation code' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Create account' })).not.toBeInTheDocument();
+      // The code is nowhere on the page while nobody knows who is looking at it.
+      expect(document.body).not.toHaveTextContent(activationCode);
+
+      session.respond(unauthorized());
+
+      await formShown();
+      expect(codeField()).toHaveValue(activationCode);
+      expect(screen.queryByText('Loading…')).not.toBeInTheDocument();
+      expect(queryAddCourseHeading()).not.toBeInTheDocument();
+    });
+
+    it('[S] with a session, the link ends on /lms/add-course with the code in the field, and nothing is redeemed or activated', async () => {
+      const fetchMock = stubApi(created, { signedIn: true });
+
+      renderActivate(activateLink);
+
+      expect(await addCourseHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue(activationCode);
+      expect(screen.getByRole('button', { name: 'Add course' })).toBeEnabled();
+      expect(queryFormHeading()).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Create account' })).not.toBeInTheDocument();
+      // Only prefilled: the student has not pressed anything.
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+      expect(activationRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('[S] after the redirect the address has no query and no fragment, and Back does not return to /activate (ADR 020)', async () => {
+      const user = userEvent.setup();
+      stubApi(created, { signedIn: true });
+
+      renderActivate('/', activateLink);
+
+      expect(await addCourseHeading()).toBeInTheDocument();
+      // Path, search and hash together: the code travelled in router state, not in the address.
+      expect(address()).toBe('/lms/add-course');
+
+      await user.click(screen.getByRole('button', { name: 'Test: go back' }));
+
+      // The /activate entry was replaced, so Back lands on the page before the link.
+      expect(await screen.findByTestId('product-page')).toBeInTheDocument();
+      expect(address()).toBe('/');
+      expect(queryFormHeading()).not.toBeInTheDocument();
+    });
+
+    it('with a session and no code in the link, shows the onboarding form with an empty code field', async () => {
+      const fetchMock = stubApi(created, { signedIn: true });
+
+      renderActivate('/activate');
+
+      await formShown();
+      expect(sessionRequests(fetchMock)).toHaveLength(1);
+      expect(codeField()).toHaveValue('');
+      expect(submitButton()).toBeEnabled();
+      expect(queryAddCourseHeading()).not.toBeInTheDocument();
+    });
+
+    it('shows the onboarding form with the code filled in when the session request fails with a 500, without asking again', async () => {
+      const fetchMock = stubApi(created, { firstSessionReply: refused(500) });
+
+      // The default client retries a failed query; the page itself must not (retry: false).
+      renderActivateWith(new QueryClient(), activateLink);
+
+      await formShown();
+      expect(sessionRequests(fetchMock)).toHaveLength(1);
+      expect(codeField()).toHaveValue(activationCode);
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(queryAddCourseHeading()).not.toBeInTheDocument();
+    });
+
+    it('stays on the form when the session becomes a student while the form is shown: the choice is made once', async () => {
+      const user = userEvent.setup();
+      const queryClient = newQueryClient();
+      const fetchMock = stubApi();
+      renderActivateWith(queryClient, activateLink);
+      await formShown();
+      await user.type(firstNameField(), 'Sam');
+
+      // What a successful onboarding on this page, or a sign-in in another tab, does to the cache.
+      await act(async () => {
+        queryClient.setQueryData(SESSION_KEY, sam);
+      });
+
+      expect(queryClient.getQueryData(SESSION_KEY)).toEqual(sam);
+      expect(address()).toBe('/activate');
+      expect(queryFormHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue(activationCode);
+      expect(firstNameField()).toHaveValue('Sam');
+      expect(queryAddCourseHeading()).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('does not decide on a signed-out answer left in the cache: it waits for the API, which says signed in', async () => {
+      const queryClient = newQueryClient();
+      // What an earlier page of this SPA left behind before the student signed in elsewhere.
+      queryClient.setQueryData(SESSION_KEY, null);
+      const fetchMock = stubApi(created, { signedIn: true });
+
+      renderActivateWith(queryClient, '/', activateLink);
+
+      expect(await addCourseHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue(activationCode);
+      expect(address()).toBe('/lms/add-course');
+      expect(queryFormHeading()).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+    });
+
+    it('with the session already in the query cache, goes to /lms/add-course once and stays there', async () => {
+      const user = userEvent.setup();
+      const queryClient = newQueryClient();
+      queryClient.setQueryData(SESSION_KEY, sam);
+      const fetchMock = stubApi(created, { signedIn: true });
+
+      renderActivateWith(queryClient, '/', activateLink);
+
+      expect(await addCourseHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue(activationCode);
+      // The cached session is refreshed in the background; that changes nothing.
+      await waitFor(() => expect(queryClient.isFetching()).toBe(0));
+      expect(address()).toBe('/lms/add-course');
+      expect(queryAddCourseHeading()).toBeInTheDocument();
+      expect(codeField()).toHaveValue(activationCode);
+      expect(queryFormHeading()).not.toBeInTheDocument();
+      expect(redemptionRequests(fetchMock)).toHaveLength(0);
+      expect(activationRequests(fetchMock)).toHaveLength(0);
+
+      // One navigation that replaced the /activate entry: Back is the page before the link.
+      await user.click(screen.getByRole('button', { name: 'Test: go back' }));
+      expect(await screen.findByTestId('product-page')).toBeInTheDocument();
+    });
   });
 });

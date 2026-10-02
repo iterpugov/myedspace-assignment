@@ -69,6 +69,30 @@ describe('LmsPage', () => {
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
   });
 
+  it('shows two cards, "Maths · Year 9" and "Maths · Year 10", for one course held in two years, without a duplicate-key warning (ADR 028)', async () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      stubLmsApi(() => json([{ ...maths, year: 9 }, { ...maths, year: 10 }]));
+
+      renderLms();
+
+      expect(await screen.findByRole('heading', { name: 'Maths · Year 9' })).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: 'Maths · Year 10' })).toBeInTheDocument();
+      // Both cards lead to the same lesson pages: lessons do not differ by year (ADR 002).
+      const main = within(screen.getByRole('main'));
+      const fractions = main.getAllByRole('link', { name: /Fractions/ });
+      expect(fractions).toHaveLength(2);
+      for (const link of fractions) {
+        expect(link).toHaveAttribute('href', `/lms/courses/${mathsId}/lessons/${fractionsId}`);
+      }
+      // React reports two children with the same key through console.error.
+      const keyWarnings = consoleError.mock.calls.filter((parts) => parts.map(String).join(' ').includes('same key'));
+      expect(keyWarnings).toHaveLength(0);
+    } finally {
+      consoleError.mockRestore();
+    }
+  });
+
   it('has an "Add a course" link to /lms/add-course in the page body when the student has courses (M13)', async () => {
     stubLmsApi(() => json([maths]));
 

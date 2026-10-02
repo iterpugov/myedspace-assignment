@@ -1,7 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useNavigate } from 'react-router';
-import { CODE_INVALID, validateActivationCode } from '../activation-code-rules';
+import { useLocation, useNavigate } from 'react-router';
+import { CODE_INPUT_MAX_LENGTH, CODE_INVALID, validateActivationCode } from '../activation-code-rules';
+import { carriedActivationCode } from '../carried-activation-code';
 import { redeemCode, RedemptionError } from '../api/activations';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
@@ -14,17 +16,32 @@ interface AddCourseForm {
   code: string;
 }
 
-/** Adds a course to the signed-in student's account with an activation code (ADR 027). */
+/**
+ * Adds a course to the signed-in student's account with an activation code (ADR 027). A
+ * student who opened an activation link while signed in arrives with the code filled in
+ * (ADR 029); it is only filled in, and nothing is added until they submit.
+ */
 export function AddCoursePage() {
   const student = useStudent();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  // Read once: the field is the student's to edit from here on.
+  const [carriedCode] = useState(() => carriedActivationCode(location.state));
+  const hasRouterState = location.state !== null;
+
+  useEffect(() => {
+    // The code is a secret (ADR 020): once it is in the field, take it out of the history
+    // entry, so "Back" to this page — after leaving it, or for the next student at a shared
+    // browser — finds an empty form. The price: a reload loses the prefill.
+    if (hasRouterState) navigate(location.pathname, { replace: true, state: null });
+  }, [hasRouterState, location.pathname, navigate]);
   const {
     register,
     handleSubmit,
     setError,
     formState: { errors },
-  } = useForm<AddCourseForm>({ defaultValues: { code: '' } });
+  } = useForm<AddCourseForm>({ defaultValues: { code: carriedCode } });
 
   const redemption = useMutation({
     mutationFn: redeemCode,
@@ -46,6 +63,15 @@ export function AddCoursePage() {
     <div className="flex max-w-form flex-col gap-6">
       {/* Names the account: at a shared browser the course goes to whoever is signed in. */}
       <h1 className="type-heading text-brand">Add a course to {student.firstName}’s account</h1>
+      {carriedCode !== '' && (
+        <>
+          <Notice live>
+            The code from your link is filled in. Press Add course to add it to {student.firstName}’s account.
+          </Notice>
+          {/* The link may have been meant for a new account, e.g. a sibling at a shared browser. */}
+          <p className="type-body">Not {student.firstName}? Sign out, then open your link again.</p>
+        </>
+      )}
       <form
         noValidate
         onSubmit={handleSubmit(({ code }) =>
@@ -65,7 +91,7 @@ export function AddCoursePage() {
           autoComplete="off"
           autoCapitalize="characters"
           spellCheck={false}
-          maxLength={64}
+          maxLength={CODE_INPUT_MAX_LENGTH}
           required
           error={errors.code?.message}
           {...register('code', { validate: validateActivationCode })}
@@ -73,8 +99,8 @@ export function AddCoursePage() {
 
         {reason === 'course_already_owned' ? (
           <Notice variant="error">
-            You already have this course. This purchase is a duplicate: ask your parent to contact us. The code has
-            not been used.
+            You already have this course for this year. This purchase is a duplicate: ask your parent to contact us.
+            The code has not been used.
           </Notice>
         ) : reason === 'code_used' ? (
           <Notice variant="error">This code has already been used.</Notice>

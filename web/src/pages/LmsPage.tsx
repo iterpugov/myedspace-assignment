@@ -26,7 +26,7 @@ export function LmsPage() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {courses.map((course) => (
-              <Card key={course.courseId} label="Your course">
+              <Card key={`${course.courseId}:${course.year}`} label="Your course">
                 <h2 className="type-subheading text-brand">
                   {course.subject} · Year {course.year}
                 </h2>
