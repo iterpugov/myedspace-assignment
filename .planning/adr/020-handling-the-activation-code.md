@@ -33,3 +33,7 @@ The confirmation page tells the parent to save the code, because it cannot be sh
 
 ## In production
 The link would be emailed, and a parent account could re-issue it.
+
+## Notes
+Amended 2026-10-02 (ADR 029): router state also carries the code from the activation page
+to the "Add a course" page for a signed-in student.

@@ -66,3 +66,8 @@ sign in and add the course there.
 The parent would attach a purchase to a child in their own account. Between services the
 claim would carry a lease, and a worker would finish or release interrupted redemptions
 instead of waiting for the code to be presented again.
+
+## Notes
+Amended 2026-10-02 (ADR 028, 029): the duplicate check and the unique index are on
+`(student, course, year)`; a signed-in student who opens the activation link arrives at
+`/lms/add-course` with the code prefilled. The code is still not carried through sign-in.

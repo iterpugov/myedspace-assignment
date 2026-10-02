@@ -56,3 +56,7 @@ In the SPA the dashboard and the lesson list are one page (`/lms`), and a lesson
 `lms` and `catalogue` would be separate services: the dashboard would call the catalogue
 over the network (with a cache and a fallback), or keep its own read model fed by catalogue
 events. Lessons would carry media and per-student progress.
+
+## Notes
+Amended 2026-10-02 (ADR 028): a student can have several enrolments for one course, one per
+year. The dashboard lists each; a lesson opens when any of them exists.

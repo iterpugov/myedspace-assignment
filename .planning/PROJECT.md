@@ -31,7 +31,7 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 002 | Course = subject + year range (3 rows); parent picks the year at purchase | [002](adr/002-course-is-subject-with-year-range.md) |
 | 003 | Order = list of student seats (year + one course); API takes many, UI sends one | [003](adr/003-order-of-student-seats.md) |
 | 004 | Student and enrolment are created when the invitation is redeemed | [004](adr/004-student-created-at-onboarding.md) |
-| 005 | Purchase outcome = link + activation code (one secret); the code adds a course to an existing account; one enrolment per course | [005](adr/005-second-purchase-for-existing-student.md) |
+| 005 | Purchase outcome = link + activation code (one secret); the code adds a course to an existing account; one enrolment per course and year (ADR 028) | [005](adr/005-second-purchase-for-existing-student.md) |
 | 006 | PostgreSQL + Prisma; migrations and seed run in a separate compose service, never on API start | [006](adr/006-postgresql-prisma-migrations-as-a-step.md) |
 | 007 | Student logs in with a unique username; no email required | [007](adr/007-student-logs-in-with-username.md) |
 | 008 | JWT in an httpOnly cookie, same-origin `/api`; passwords hashed with `scrypt` | [008](adr/008-jwt-in-httponly-cookie.md) |
@@ -54,5 +54,7 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 025 | LMS is two guarded endpoints; a lesson is found only through the student's enrolment, anything else is 404; `lms` reads lessons through `catalogue`; lessons are plain text | [025](adr/025-lms-contract-and-access-rule.md) |
 | 026 | Login answers 401 identically for unknown username and wrong password, with a dummy hash check; logout clears the cookie without revoking the token | [026](adr/026-login-and-logout-contract.md) |
 | 027 | A signed-in student adds a course with a code: duplicate check, claim, enrol; a claim is released if the enrolment turns out to be a duplicate; the code is pasted in the LMS, not carried through sign-in | [027](adr/027-adding-a-course-to-an-existing-account.md) |
+| 028 | A duplicate is the same course and the same year: a student can hold one course for two years; one dashboard card per enrolment | [028](adr/028-one-enrolment-per-course-and-year.md) |
+| 029 | The activation link takes a signed-in student to "Add a course" with the code prefilled, in router state; nothing is redeemed without a submit | [029](adr/029-activation-link-for-a-signed-in-student.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).

@@ -34,6 +34,8 @@ the decision; it records the call, it does not make it.
 | 025 | [LMS: two guarded endpoints, every read scoped by the student's enrolment](025-lms-contract-and-access-rule.md) | accepted | 2026-10-02 |
 | 026 | [Login gives one answer for every failure; logout only clears the cookie](026-login-and-logout-contract.md) | accepted | 2026-10-02 |
 | 027 | [Adding a course: check for a duplicate, claim, enrol; release the claim on a late duplicate](027-adding-a-course-to-an-existing-account.md) | accepted | 2026-10-02 |
+| 028 | [A student holds a course once per year, not once](028-one-enrolment-per-course-and-year.md) | accepted | 2026-10-02 |
+| 029 | [The activation link opens "Add a course" for a signed-in student](029-activation-link-for-a-signed-in-student.md) | accepted | 2026-10-02 |
 
 ## Format
 

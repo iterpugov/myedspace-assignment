@@ -7,9 +7,10 @@
 
 ## Phase
 
-All slices are done and the work is ready to hand in. The root `README.md` covers how to
-run, the journey, architecture, key decisions, AI usage and limitations. The journey was
-walked from a clean clone following the README, and all three test suites pass there.
+Slices 0–6 are done and the README is delivered. Slice 7 is in progress: two changes asked
+for after delivery — the same course for two different years on one account (ADR 028), and
+the activation link opening "Add a course" for a signed-in student (ADR 029). Full
+pipeline with `security-reviewer`.
 
 Left for the user: make the GitHub repository public (DEL-1).
 
@@ -54,6 +55,8 @@ Known and not fixed, listed in the README as limitations:
 - Login and logout contract (ADR 026)
 - Adding a course to an existing account: smallest variant, release on a late duplicate
   (ADR 027)
+- A duplicate is the same course and year; one enrolment per course and year (ADR 028)
+- The activation link forwards a signed-in student to "Add a course", prefilled (ADR 029)
 
 ## Open decisions
 

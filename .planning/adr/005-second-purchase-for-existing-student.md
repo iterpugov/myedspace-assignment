@@ -46,3 +46,7 @@ directly. Duplicate purchases would be prevented at checkout or refunded.
 Amended 2026-10-02 (ADR 027): the code is not carried through sign-in and the activation
 link does not detect a signed-in student; an existing student pastes the code into the
 "Add a course" form in the LMS. A taken username keeps the ADR 023 wording.
+
+Amended 2026-10-02 (ADR 028, 029): a duplicate is the same course and the same year, so a
+student can hold one course for two years; the activation link now takes a signed-in
+student to "Add a course" with the code prefilled.
