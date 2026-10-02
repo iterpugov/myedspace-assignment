@@ -26,7 +26,8 @@ Passwords are hashed with `scrypt` from Node's standard library, with a per-user
 ## Consequences
 - The token is not reachable from page scripts; the guard needs no database call.
 - A token cannot be revoked before it expires.
-- The signing secret comes from the environment, with a local default in `.env.example`.
+- The signing secret comes from the environment; without one the API generates a random
+  secret at start (amended by [ADR 024](024-session-secret-and-libraries.md)).
 
 ## In production
 An identity provider or a dedicated auth service: short-lived access tokens with rotation,

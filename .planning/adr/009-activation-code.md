@@ -14,7 +14,7 @@ and passed to the child, both as a link and as a code (ADR 005).
 | Shape | 15 characters in three groups, `XXXXX-XXXXX-XXXXX`, like a game-store product key. Alphabet of 32 unambiguous letters and digits: 75 bits from a cryptographic random source |
 | Storage | Only the SHA-256 hash of the code. The code itself is returned once, in the purchase response |
 | Lifetime | No expiry |
-| Single use | Marked redeemed in the same transaction that creates the enrolment, with a database constraint of one enrolment per seat |
+| Single use | Claimed for one student by a conditional update, with a database constraint of one enrolment per seat (amended by [ADR 022](022-redemption-without-a-shared-transaction.md)) |
 
 Input is normalised before hashing: upper-cased, hyphens removed.
 

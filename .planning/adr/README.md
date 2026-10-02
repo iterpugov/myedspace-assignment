@@ -28,6 +28,9 @@ the decision; it records the call, it does not make it.
 | 019 | [An activation code row carries its own course and year](019-activation-code-is-self-contained.md) | accepted | 2026-10-02 |
 | 020 | [The plain activation code lives only in the response and the browser tab](020-handling-the-activation-code.md) | accepted | 2026-10-02 |
 | 021 | [Activation codes are issued before the order is saved, in separate transactions](021-codes-issued-before-the-order.md) | accepted | 2026-10-02 |
+| 022 | [Redeeming a code: the student first, then a claim that binds the code to them](022-redemption-without-a-shared-transaction.md) | accepted | 2026-10-02 |
+| 023 | [Onboarding: one form, one request, distinct answers for a bad and a used code](023-onboarding-contract.md) | accepted | 2026-10-02 |
+| 024 | [No signing secret in the repository; `@nestjs/jwt` and `cookie-parser`](024-session-secret-and-libraries.md) | accepted | 2026-10-02 |
 
 ## Format
 

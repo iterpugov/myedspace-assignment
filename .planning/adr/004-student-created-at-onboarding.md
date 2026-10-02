@@ -20,7 +20,9 @@ with a valid activation code; no account exists before that.
   inactive, password-less records and makes the parent type what the student types anyway.
 
 ## Consequences
-- No half-existing students: a student row always has credentials and an enrolment.
+- A student row always has credentials. It normally has an enrolment too, but an
+  interrupted redemption can leave an account without one (amended by
+  [ADR 022](022-redemption-without-a-shared-transaction.md)).
 - Until onboarding the system does not know who a seat is for.
 - The activation code is the only link between a paid seat and its future student.
 

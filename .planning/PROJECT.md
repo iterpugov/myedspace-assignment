@@ -48,5 +48,8 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 019 | An activation code row stores its own `courseId` and `year`; `activation` never calls `checkout` | [019](adr/019-activation-code-is-self-contained.md) |
 | 020 | The plain code is never logged; confirmation gets it through router state; the link carries it in the URL fragment | [020](adr/020-handling-the-activation-code.md) |
 | 021 | `checkout` and `activation` share no transaction: codes are issued first, then payment, then the order; an orphan code is harmless | [021](adr/021-codes-issued-before-the-order.md) |
+| 022 | Redemption without a shared transaction: create the student, claim the code for them, enrol, confirm; an interrupted redemption is resumed by the code | [022](adr/022-redemption-without-a-shared-transaction.md) |
+| 023 | Onboarding is one form and one request; unknown code 422, used code 409, taken username 409; first name is the only personal detail | [023](adr/023-onboarding-contract.md) |
+| 024 | `JWT_SECRET` is never committed: optional, random at start when unset; `@nestjs/jwt` (HS256) and `cookie-parser` | [024](adr/024-session-secret-and-libraries.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
