@@ -82,7 +82,7 @@ is the open substitute.
 | `Button` | `primary`: lime, ink text, notched, 56px tall. `outline`: white, 1px `line-brand` border, blue text. `link` (`TextLink`): blue text, used for "Back". All show a visible focus ring and a disabled state |
 | `Card` | `surface-tint` background, notched, 32px padding; optional small label above the title ("Unit 1") |
 | `ChoiceCard` | A `Card` that is one option of a radio group: the whole card is the click target, and the selected card turns `brand` with white text |
-| `Field` | Label above, square input 48px tall with a 1px `line` border; border turns `brand` on focus and `danger` on error; error text below in `danger` |
+| `Field` | Label above, square input 48px tall with a 1px `line` border; border turns `brand` on focus and `danger` on error; optional hint below in muted ink, error text below in `danger` |
 | `Select` | Same look as `Field`, with a chevron on the right; used for the year |
 | `Steps` | Row of equal segments, filled in `brand` up to the current step, with a "n of m steps" caption |
 | `Notice` | Message block with a coloured left edge: `info` (brand) and `error` (danger). Errors are announced to assistive technology; an info notice only when marked `live` |
