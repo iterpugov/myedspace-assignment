@@ -27,9 +27,9 @@ export class RedemptionSteps {
    * Completes a claimed code: enrols the student the claim names and marks the code
    * redeemed — always for the claiming student, never for whoever presents the code.
    *
-   * If the student turns out to have the course already, through another seat, the claim
-   * is released and the code is free for someone else (ADR 027). Releasing is safe at that
-   * point: the refusal means no enrolment uses this seat.
+   * If the student turns out to have the course for that year already, through another
+   * seat, the claim is released and the code is free for someone else (ADR 027, 028).
+   * Releasing is safe at that point: the refusal means no enrolment uses this seat.
    */
   async finish(code: ClaimedCode, studentId: string): Promise<RedemptionOutcome> {
     if (code.redeemedAt) return 'redeemed';
@@ -38,7 +38,7 @@ export class RedemptionSteps {
     } catch (error) {
       if (!(error instanceof AlreadyEnrolledInCourseError)) throw error;
       await this.codes.release(code.id, studentId);
-      this.logger.warn(`Student ${studentId} already has the course; the claim on a code was released`);
+      this.logger.warn(`Student ${studentId} already has the course for that year; the claim on a code was released`);
       return 'duplicate';
     }
     await this.codes.confirm(code.id);

@@ -20,12 +20,15 @@ export class LearningService {
     private readonly catalogue: CatalogueService,
   ) {}
 
-  /** The student's courses with their lessons, ordered by subject. Empty without an enrolment. */
+  /**
+   * The student's courses with their lessons, one entry per enrolment, ordered by subject and
+   * then year. A course held for two years appears twice (ADR 028). Empty without an enrolment.
+   */
   async listCourses(studentId: string): Promise<EnrolledCourseResponse[]> {
     const enrolments = await this.enrolments.listForStudent(studentId);
     if (enrolments.length === 0) return [];
 
-    const courseIds = enrolments.map((enrolment) => enrolment.courseId);
+    const courseIds = [...new Set(enrolments.map((enrolment) => enrolment.courseId))];
     const [courses, lessons] = await Promise.all([
       this.catalogue.findCoursesByIds(courseIds),
       this.catalogue.listLessonSummaries(courseIds),
@@ -46,7 +49,7 @@ export class LearningService {
             .map(({ id, position, title, summary }) => ({ id, position, title, summary })),
         };
       })
-      .sort((a, b) => a.subject.localeCompare(b.subject));
+      .sort((a, b) => a.subject.localeCompare(b.subject) || a.year - b.year);
   }
 
   /**
@@ -54,7 +57,8 @@ export class LearningService {
    * "not enrolled" from "no such lesson", and neither can the student.
    */
   async openLesson(studentId: string, courseId: string, lessonId: string): Promise<LessonResponse | undefined> {
-    // The enrolment is checked first: no catalogue read for a course the student does not have.
+    // An enrolment for any year opens the course: lessons do not differ by year (ADR 028).
+    // It is checked first: no catalogue read for a course the student does not have.
     const enrolment = await this.enrolments.findForCourse(studentId, courseId);
     if (!enrolment) return undefined;
 

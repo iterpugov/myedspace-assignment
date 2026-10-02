@@ -76,7 +76,10 @@ export interface LessonSummaryResponse {
   summary: string;
 }
 
-/** A course the signed-in student is enrolled in, with its lessons in order. */
+/**
+ * A course the signed-in student is enrolled in, with its lessons in order. One entry per
+ * enrolment: a course held for two years appears twice, once per year.
+ */
 export interface EnrolledCourseResponse {
   courseId: string;
   subject: string;
@@ -103,6 +106,7 @@ export interface RedeemCodeResponse {
   year: number;
 }
 
+/** `course_already_owned`: the student already has this course for this year (ADR 028). */
 export type RedemptionFailureReason = 'code_invalid' | 'code_used' | 'course_already_owned';
 
 /** Body of a 409 or 422 from POST /api/redemptions. */

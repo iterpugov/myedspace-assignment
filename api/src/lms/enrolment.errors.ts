@@ -6,10 +6,10 @@ export class SeatAlreadyEnrolledError extends Error {
   }
 }
 
-/** The student already has this course through another seat (ADR 005). */
+/** The student already has this course for this year through another seat (ADR 028). */
 export class AlreadyEnrolledInCourseError extends Error {
   constructor() {
-    super('The student is already enrolled in this course');
+    super('The student is already enrolled in this course for this year');
     this.name = 'AlreadyEnrolledInCourseError';
   }
 }

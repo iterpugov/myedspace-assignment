@@ -68,7 +68,7 @@ export class ActivationService {
 
   /**
    * Undoes a claim, and reports whether it did. Only for a claim that cannot be completed
-   * because the student already has the course (ADR 027): the condition lets go of a code
+   * because the student already has the course for that year (ADR 027, 028): the condition lets go of a code
    * only while it is claimed by that student and not redeemed, so a used code stays used.
    */
   async release(codeId: string, studentId: string): Promise<boolean> {

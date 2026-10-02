@@ -31,6 +31,7 @@ const REDEMPTIONS = '/api/redemptions';
 const UNKNOWN_CODE = 'ABCDE-FGHJK-MNPQR';
 /** Not a real hash: students created directly never sign in with a password. */
 const DUMMY_PASSWORD_HASH = 'scrypt$N=32768,r=8,p=3$dGVzdA==$dGVzdA==';
+const DUPLICATE_MESSAGE = 'You already have this course for this year; the code has not been used';
 
 function sha256OfNormalised(code: string): string {
   return createHash('sha256').update(code.replace(/[-\s]/g, '').toUpperCase()).digest('hex');
@@ -40,7 +41,7 @@ function withoutHyphens(code: string): string {
   return code.replace(/-/g, '');
 }
 
-describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
+describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027, ADR 028)', () => {
   let app: INestApplication;
   /** The real application whose lms module refuses every enrolment write. */
   let lmsFailingApp: INestApplication;
@@ -391,14 +392,78 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
     });
   });
 
-  describe('a duplicate course (ADR 005: the code stays valid)', () => {
-    it('a Maths student redeeming a second Maths code gets 409 course_already_owned; the code is untouched and a new student then onboards with it', async () => {
+  describe('another year of a course the student has (ADR 028)', () => {
+    it('a Maths Year 9 student redeems a Maths Year 10 code: 200, two enrolments for the course, both codes redeemed, and the dashboard lists Maths twice ordered by year', async () => {
+      const onboarded = await onboardWithCode('sam', 'Maths', 9);
+      const sam = { ...onboarded, cookie: cookieFor(app, onboarded.student.id) };
+      const second = await buyCode(app, 'Maths', 10);
+      const before = await codeRow(second.code);
+
+      const response = await redeem({ code: second.code }, sam.cookie);
+
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ courseId: second.courseId, year: 10 });
+      expect(sessionCookieOf(response)).toBeUndefined();
+
+      const maths = await prisma.enrolment.findMany({
+        where: { studentId: sam.student.id, courseId: second.courseId },
+        orderBy: { year: 'asc' },
+      });
+      expect(maths.map(({ year }) => year)).toEqual([9, 10]);
+      expect(maths[1].seatId).toBe(before.seatId);
+      expect(await prisma.enrolment.count()).toBe(2);
+      for (const code of [sam.code, second.code]) {
+        const row = await codeRow(code);
+        expect(row.claimedByStudentId).toBe(sam.student.id);
+        expect(row.redeemedAt).toBeInstanceOf(Date);
+      }
+
+      const courses = await request(app.getHttpServer()).get('/api/lms/courses').set('Cookie', sam.cookie).expect(200);
+      expect(
+        (courses.body as EnrolledCourseResponse[]).map(({ courseId, subject, year }) => ({ courseId, subject, year })),
+      ).toEqual([
+        { courseId: second.courseId, subject: 'Maths', year: 9 },
+        { courseId: second.courseId, subject: 'Maths', year: 10 },
+      ]);
+    });
+
+    it('a lower year added after a higher one is listed first: the dashboard is ordered by year, not by when the course was added', async () => {
+      const sam = await onboard('sam', 'Maths', 10);
+      const second = await buyCode(app, 'Maths', 9);
+
+      const response = await redeem({ code: second.code }, sam.cookie);
+
+      expect(response.status).toBe(200);
+      const courses = await request(app.getHttpServer()).get('/api/lms/courses').set('Cookie', sam.cookie).expect(200);
+      expect((courses.body as EnrolledCourseResponse[]).map(({ subject, year }) => ({ subject, year }))).toEqual([
+        { subject: 'Maths', year: 9 },
+        { subject: 'Maths', year: 10 },
+      ]);
+    });
+
+    it("the caller's own redeemed code for the second year again returns 200 with the same body and no third enrolment", async () => {
+      const sam = await onboard('sam', 'Maths', 9);
+      const second = await buyCode(app, 'Maths', 10);
+      const first = await redeem({ code: second.code }, sam.cookie);
+      expect(first.status).toBe(200);
+
+      const again = await redeem({ code: second.code }, sam.cookie);
+
+      expect(again.status).toBe(200);
+      expect(again.body).toEqual({ courseId: second.courseId, year: 10 });
+      expect(await enrolmentsOf(sam.student.id, second.courseId)).toHaveLength(2);
+    });
+  });
+
+  describe('a duplicate course and year (ADR 005, ADR 028: the code stays valid)', () => {
+    it('a Maths Year 7 student redeeming a second Maths Year 7 code gets 409 course_already_owned; the code is untouched and a new student then onboards with it', async () => {
       const sam = await onboard('sam', 'Maths', 7);
       const second = await buyCode(app, 'Maths', 7);
 
       const response = await redeem({ code: second.code }, sam.cookie);
 
       expectFailure(response, 409, 'course_already_owned');
+      expect((response.body as RedemptionErrorResponse).message).toBe(DUPLICATE_MESSAGE);
       expect(sessionCookieOf(response)).toBeUndefined();
       await expectUntouched(second.code);
       expect(await prisma.enrolment.count()).toBe(1);
@@ -409,17 +474,24 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
       expect(await prisma.enrolment.count()).toBe(2);
     });
 
-    it('the same course in another year (Maths Year 8 for a Maths Year 7 student) is 409 course_already_owned', async () => {
-      const sam = await onboard('sam', 'Maths', 7);
-      const second = await buyCode(app, 'Maths', 8);
+    it('a student with Maths in Years 9 and 10 redeeming a third Maths code for Year 10 gets 409 course_already_owned; the code is untouched', async () => {
+      const sam = await onboard('sam', 'Maths', 9);
+      const yearTen = await buyCode(app, 'Maths', 10);
+      expect((await redeem({ code: yearTen.code }, sam.cookie)).status).toBe(200);
+      const third = await buyCode(app, 'Maths', 10);
 
-      const response = await redeem({ code: second.code }, sam.cookie);
+      const response = await redeem({ code: third.code }, sam.cookie);
 
       expectFailure(response, 409, 'course_already_owned');
-      await expectUntouched(second.code);
-      const enrolments = await enrolmentsOf(sam.student.id);
-      expect(enrolments).toHaveLength(1);
-      expect(enrolments[0].year).toBe(7);
+      // The body names no course, year or student.
+      expect(Object.keys(response.body as object).sort()).toEqual(['message', 'reason', 'statusCode']);
+      expect((response.body as RedemptionErrorResponse).message).toBe(DUPLICATE_MESSAGE);
+      expect(response.text).not.toContain(third.courseId);
+      expect(response.text).not.toContain(sam.student.id);
+      await expectUntouched(third.code);
+      expect(await enrolmentsOf(sam.student.id, third.courseId)).toHaveLength(2);
+
+      await expectStillRedeemableByANewStudent(third.code);
     });
   });
 
@@ -467,10 +539,40 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
       expect(row.redeemedAt).toBeInstanceOf(Date);
     });
 
-    it('one student, two codes for one course: one 200 and one 409 course_already_owned; the losing code ends unclaimed and a new student onboards with it (ADR 027)', async () => {
+    it('one student, two codes for one course in two different years: both 200, two enrolments and both codes redeemed (ADR 028)', async () => {
       const sam = await onboard('sam', 'English', 8);
       const first = await buyCode(app, 'Maths', 7);
-      const second = await buyCode(app, 'Maths', 7);
+      const second = await buyCode(app, 'Maths', 8);
+
+      const responses = await Promise.all([
+        redeem({ code: first.code }, sam.cookie),
+        redeem({ code: second.code }, sam.cookie),
+      ]);
+
+      // The two codes share no key: neither the duplicate check nor the unique index sets them against each other.
+      expect(responses.map((response) => response.status)).toEqual([200, 200]);
+      expect(responses[0].body).toEqual({ courseId: first.courseId, year: 7 });
+      expect(responses[1].body).toEqual({ courseId: first.courseId, year: 8 });
+
+      const maths = await prisma.enrolment.findMany({
+        where: { studentId: sam.student.id, courseId: first.courseId },
+        orderBy: { year: 'asc' },
+      });
+      expect(maths.map(({ year }) => year)).toEqual([7, 8]);
+      expect(await prisma.enrolment.count()).toBe(3);
+      for (const [index, code] of [first.code, second.code].entries()) {
+        const row = await codeRow(code);
+        expect(row.claimedByStudentId).toBe(sam.student.id);
+        expect(row.redeemedAt).toBeInstanceOf(Date);
+        expect(maths[index].seatId).toBe(row.seatId);
+      }
+    });
+
+    it('one student, two codes for one course and the same year: one 200 and one 409 course_already_owned; the losing code ends unclaimed and a new student onboards with it (ADR 027, ADR 028)', async () => {
+      const sam = await onboard('sam', 'English', 8);
+      const sameYear = 7;
+      const first = await buyCode(app, 'Maths', sameYear);
+      const second = await buyCode(app, 'Maths', sameYear);
 
       const responses = await Promise.all([
         redeem({ code: first.code }, sam.cookie),
@@ -486,6 +588,7 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
 
       const maths = await enrolmentsOf(sam.student.id, first.courseId);
       expect(maths).toHaveLength(1);
+      expect(maths[0].year).toBe(sameYear);
       const won = await codeRow(winningCode);
       expect(won.claimedByStudentId).toBe(sam.student.id);
       expect(won.redeemedAt).toBeInstanceOf(Date);
@@ -590,11 +693,34 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
       expect(await prisma.enrolment.count()).toBe(2);
       expect((await codeRow(english.code)).redeemedAt).toBeInstanceOf(Date);
     });
+
+    it('a code for another year of a course the student has, claimed by that student and unredeemed: presenting it answers 200 and creates the enrolment (ADR 028)', async () => {
+      const sam = await onboard('sam', 'Maths', 7);
+      const yearEight = await buyCode(app, 'Maths', 8);
+      const { id, seatId } = await codeRow(yearEight.code);
+      await prisma.activationCode.update({ where: { id }, data: { claimedByStudentId: sam.student.id } });
+
+      const response = await redeem({ code: yearEight.code }, sam.cookie);
+
+      // Not a duplicate any more: the claim is completed, not released.
+      expect(response.status).toBe(200);
+      expect(response.body).toEqual({ courseId: yearEight.courseId, year: 8 });
+      const maths = await prisma.enrolment.findMany({
+        where: { studentId: sam.student.id, courseId: yearEight.courseId },
+        orderBy: { year: 'asc' },
+      });
+      expect(maths.map(({ year }) => year)).toEqual([7, 8]);
+      expect(maths[1].seatId).toBe(seatId);
+      const row = await codeRow(yearEight.code);
+      expect(row.claimedByStudentId).toBe(sam.student.id);
+      expect(row.redeemedAt).toBeInstanceOf(Date);
+    });
   });
 
-  describe('a claim left on a code whose student already has the course through another seat (ADR 027, release)', () => {
+  describe('a claim left on a code whose student already has the course for that year through another seat (ADR 027, ADR 028, release)', () => {
     /** The state a crash between the refused enrolment and the release leaves behind. */
     async function residueFor(studentId: string): Promise<string> {
+      // The same course and the same year as the enrolment the student has.
       const { code } = await buyCode(app, 'Maths', 7);
       const { id } = await codeRow(code);
       await prisma.activationCode.update({ where: { id }, data: { claimedByStudentId: studentId } });
@@ -668,12 +794,13 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
       return upper.includes(code.toUpperCase()) || upper.includes(withoutHyphens(code).toUpperCase());
     }
 
-    it('no line written during a redemption, a duplicate, an unknown code and a failure contains the plain code', async () => {
+    it('no line written during a redemption, a second year of an owned course, a duplicate, an unknown code and a failure contains the plain code', async () => {
       const sam = await onboard('sam', 'Maths', 7);
       const english = await buyCode(app, 'English', 8);
       const duplicate = await buyCode(app, 'Maths', 7);
+      const otherYear = await buyCode(app, 'Maths', 8);
       const science = await buyCode(app, 'Science', 9);
-      const codes = [english.code, duplicate.code, science.code, UNKNOWN_CODE];
+      const codes = [english.code, otherYear.code, duplicate.code, science.code, UNKNOWN_CODE];
 
       lines.length = 0;
       // Every Logger instance of every application in this process writes through this one.
@@ -684,6 +811,8 @@ describe('Adding a course — POST /api/redemptions (ADR 005, ADR 027)', () => {
       try {
         await redeem({ code: withoutHyphens(english.code).toLowerCase() }, sam.cookie).expect(200);
         await redeem({ code: english.code }, sam.cookie).expect(200);
+        // Status only, so that a failure here does not print a body or a code.
+        expect((await redeem({ code: otherYear.code }, sam.cookie)).status).toBe(200);
         await redeem({ code: duplicate.code }, sam.cookie).expect(409);
         await redeem({ code: UNKNOWN_CODE }, sam.cookie).expect(422);
         const failed = await redeem(

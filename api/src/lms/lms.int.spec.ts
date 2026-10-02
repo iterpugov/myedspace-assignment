@@ -28,7 +28,7 @@ function lessonPath(courseId: string, lessonId: string): string {
   return `${COURSES}/${courseId}/lessons/${lessonId}`;
 }
 
-describe('LMS — GET /api/lms/courses and a lesson (LMS-1..LMS-4, ADR 025)', () => {
+describe('LMS — GET /api/lms/courses and a lesson (LMS-1..LMS-4, ADR 025, ADR 028)', () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let jwt: JwtService;
@@ -213,6 +213,28 @@ describe('LMS — GET /api/lms/courses and a lesson (LMS-1..LMS-4, ADR 025)', ()
       expect(body[1].lessons[0].id).toBe(mathsLesson.id);
     });
 
+    it('a student with one course in two years gets two entries with the same courseId ordered by year, each with the lessons (ADR 028)', async () => {
+      // The higher year first, so the order is not just the order the rows were written in.
+      const { student, cookie, courseId: mathsId } = await onboard('sam', 'Maths', 10);
+      const englishId = await courseIdOf('English');
+      await enrolments.enrol({ studentId: student.id, courseId: englishId, year: 11, seatId: randomUUID() });
+      await enrolments.enrol({ studentId: student.id, courseId: mathsId, year: 9, seatId: randomUUID() });
+      const stored = await prisma.lesson.findMany({ where: { courseId: mathsId }, orderBy: { position: 'asc' } });
+
+      const body = (await get(COURSES, cookie).expect(200)).body as EnrolledCourseResponse[];
+
+      // By subject first, then by year: English Year 11 still comes before Maths Year 9.
+      expect(body.map(({ courseId, subject, year }) => ({ courseId, subject, year }))).toEqual([
+        { courseId: englishId, subject: 'English', year: 11 },
+        { courseId: mathsId, subject: 'Maths', year: 9 },
+        { courseId: mathsId, subject: 'Maths', year: 10 },
+      ]);
+      const summaries = stored.map(({ id, position, title, summary }) => ({ id, position, title, summary }));
+      expect(summaries.length).toBeGreaterThanOrEqual(1);
+      expect(body[1].lessons).toEqual(summaries);
+      expect(body[2].lessons).toEqual(summaries);
+    });
+
     it('a student with no enrolment gets 200 and an empty list (ADR 022)', async () => {
       const { cookie } = await studentWithoutCourse();
 
@@ -300,6 +322,32 @@ describe('LMS — GET /api/lms/courses and a lesson (LMS-1..LMS-4, ADR 025)', ()
         expect(response.text).not.toContain(lesson.title);
       },
     );
+
+    it('[S] a student who holds Maths in two years opens a Maths lesson, and a lesson of a course not held is the identical 404 as an unknown lesson (ADR 028)', async () => {
+      const { student, cookie, courseId: mathsId } = await onboard('sam', 'Maths', 9);
+      await enrolments.enrol({ studentId: student.id, courseId: mathsId, year: 10, seatId: randomUUID() });
+      const lesson = await lessonOf('Maths', 2);
+      const science = await lessonOf('Science');
+
+      const opened = await get(lessonPath(mathsId, lesson.id), cookie).expect(200);
+
+      expect(opened.body).toEqual({
+        id: lesson.id,
+        courseId: mathsId,
+        subject: 'Maths',
+        position: 2,
+        title: lesson.title,
+        summary: lesson.summary,
+        body: lesson.body,
+      });
+
+      const notHeld = await expectNotAvailable(lessonPath(science.courseId, science.id), cookie);
+      const unknown = await expectNotAvailable(lessonPath(mathsId, randomUUID()), cookie);
+
+      expect(notHeld.text).not.toContain(science.title);
+      expect(notHeld.body).toEqual(unknown.body);
+      expect(notHeld.text).toBe(unknown.text);
+    });
 
     it('a random course id and a random lesson id are 404', async () => {
       const { cookie, courseId } = await onboard('sam', 'Maths');

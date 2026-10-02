@@ -97,6 +97,6 @@ model Enrolment {
   seatId    String   @unique @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamptz(3)
 
-  /// One enrolment per course for a student (ADR 005).
-  @@unique([studentId, courseId])
+  /// One enrolment per course and year for a student (ADR 028).
+  @@unique([studentId, courseId, year])
 }

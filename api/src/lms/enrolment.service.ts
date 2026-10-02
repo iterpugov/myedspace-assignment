@@ -40,15 +40,34 @@ export class EnrolmentService {
     }
   }
 
+  /** Every enrolment of the student; the same course appears once per year (ADR 028). */
   listForStudent(studentId: string): Promise<StudentEnrolment[]> {
-    return this.prisma.enrolment.findMany({ select: enrolmentFields, where: { studentId } });
+    return this.prisma.enrolment.findMany({
+      select: enrolmentFields,
+      where: { studentId },
+      orderBy: { year: 'asc' },
+    });
   }
 
-  /** The student's enrolment in this course, if there is one: the LMS access rule (ADR 025). */
+  /**
+   * An enrolment of the student in this course, if there is one: the LMS access rule
+   * (ADR 025). A student can hold a course for several years; any of them is enough, and
+   * the lowest year is the one returned.
+   */
   async findForCourse(studentId: string, courseId: string): Promise<StudentEnrolment | undefined> {
+    const enrolment = await this.prisma.enrolment.findFirst({
+      select: enrolmentFields,
+      where: { studentId, courseId },
+      orderBy: { year: 'asc' },
+    });
+    return enrolment ?? undefined;
+  }
+
+  /** The student's enrolment in this course for this year: what makes a purchase a duplicate (ADR 028). */
+  async findForCourseYear(studentId: string, courseId: string, year: number): Promise<StudentEnrolment | undefined> {
     const enrolment = await this.prisma.enrolment.findUnique({
       select: enrolmentFields,
-      where: { studentId_courseId: { studentId, courseId } },
+      where: { studentId_courseId_year: { studentId, courseId, year } },
     });
     return enrolment ?? undefined;
   }

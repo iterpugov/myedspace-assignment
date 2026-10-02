@@ -7,7 +7,11 @@ import { codeInvalid, codeUsed, redemptionRefusal } from './redemption-failures'
 import { RedemptionSteps } from './redemption-steps';
 
 const alreadyOwned = () =>
-  redemptionRefusal(409, 'course_already_owned', 'You already have this course; the code has not been used');
+  redemptionRefusal(
+    409,
+    'course_already_owned',
+    'You already have this course for this year; the code has not been used',
+  );
 
 @Injectable()
 export class CourseAdditionService {
@@ -26,15 +30,15 @@ export class CourseAdditionService {
    * As in onboarding, each module writes in its own transaction (ADR 022), and the order is
    * chosen so that the failure that is expected to happen needs no compensation:
    *
-   * - the student is asked for a duplicate first — a code for a course they already have
-   *   stops here, untouched and still valid for someone else (ADR 005);
+   * - the student is asked for a duplicate first — a code for a course and year they already
+   *   have stops here, untouched and still valid for someone else (ADR 005, 028);
    * - the code is then claimed by a conditional update, the single-use gate;
    * - the enrolment is created and the code is marked redeemed.
    *
    * The price of checking first: the check is a read in `lms` followed by a write here, not
    * one transaction, so it can be stale — the same student redeeming two codes for one
-   * course at the same moment passes it twice. The unique index in `lms` is the real rule.
-   * When it refuses the enrolment after the claim, the claim is released (see
+   * course and year at the same moment passes it twice. The unique index in `lms` is the
+   * real rule. When it refuses the enrolment after the claim, the claim is released (see
    * RedemptionSteps.finish); a crash before the release leaves a claimed code that is
    * released the next time anyone presents it. Claiming first would close the gap, but
    * then every ordinary duplicate would need that compensation.
@@ -81,10 +85,10 @@ export class CourseAdditionService {
     for (let attempt = 0; attempt < 2; attempt += 1) {
       if (code.claimedByStudentId) return { code, claimant: code.claimedByStudentId };
 
-      if (await this.enrolments.findForCourse(studentId, code.courseId)) {
+      if (await this.enrolments.findForCourseYear(studentId, code.courseId, code.year)) {
         const current = await this.codes.findByCode(plainCode);
         if (current?.claimedByStudentId === studentId) return { code: current, claimant: studentId };
-        this.logger.warn(`Student ${studentId} presented a code for a course they already have`);
+        this.logger.warn(`Student ${studentId} presented a code for a course and year they already have`);
         throw alreadyOwned();
       }
 
