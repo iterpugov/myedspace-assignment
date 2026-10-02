@@ -46,3 +46,7 @@ Two ownership calls where a concept is touched by two modules:
 ## In production
 Modules could become separate services, in Node.js or Java, once team ownership or load
 calls for it. The README describes where those seams are.
+
+## Notes
+- "One transaction where it is needed" was available and deliberately not used: writes that
+  cross modules run as separate transactions (ADR 021, 022, 027).

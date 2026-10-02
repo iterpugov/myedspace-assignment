@@ -34,3 +34,9 @@ successfully. The API itself never migrates.
 The `migrate` service becomes a job that runs before the rollout (e.g. a Helm pre-upgrade
 hook) under a role with schema rights the application role does not have. Migrations are
 written to be backward compatible, because old instances keep running during the rollout.
+
+## Notes
+- The Context says redeeming a code "has to be one atomic operation". That was later
+  replaced: a code is claimed by one conditional update and the rest of the redemption is a
+  resumable sequence without a shared transaction (ADR 021, 022). Database constraints —
+  unique indexes above all — still carry the rules.
