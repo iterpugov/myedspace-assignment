@@ -11,6 +11,14 @@ export interface NewEnrolment {
   seatId: string;
 }
 
+/** What the LMS needs to know about one enrolment. */
+export interface StudentEnrolment {
+  courseId: string;
+  year: number;
+}
+
+const enrolmentFields = { courseId: true, year: true } as const;
+
 @Injectable()
 export class EnrolmentService {
   constructor(private readonly prisma: PrismaService) {}
@@ -30,5 +38,18 @@ export class EnrolmentService {
       if (!existing) throw new AlreadyEnrolledInCourseError();
       if (existing.studentId !== enrolment.studentId) throw new SeatAlreadyEnrolledError();
     }
+  }
+
+  listForStudent(studentId: string): Promise<StudentEnrolment[]> {
+    return this.prisma.enrolment.findMany({ select: enrolmentFields, where: { studentId } });
+  }
+
+  /** The student's enrolment in this course, if there is one: the LMS access rule (ADR 025). */
+  async findForCourse(studentId: string, courseId: string): Promise<StudentEnrolment | undefined> {
+    const enrolment = await this.prisma.enrolment.findUnique({
+      select: enrolmentFields,
+      where: { studentId_courseId: { studentId, courseId } },
+    });
+    return enrolment ?? undefined;
   }
 }
