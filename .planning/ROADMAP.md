@@ -17,11 +17,13 @@ with `docker compose up` and the journey works up to that point.
 | 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | done |
 | 5 | Optional — add a course to an existing account: code entry in the LMS, duplicate message (smallest variant, ADR 027) | ADR 005, ADR 027 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | done |
 | 6 | README and delivery: architecture, decisions, AI usage with artefacts, clean-clone check | DEL-1, DEL-3 – DEL-5, TEC-3 | The full journey is walked through by hand following the README | 20 min | done |
+| 7 | After delivery — the same course for two different years on one account; the activation link opens "Add a course" for a signed-in student | ADR 028, ADR 029 | A Maths Year 9 student adds Maths Year 10; a signed-in student who opens a link arrives at the add-course form with the code filled in, and nothing is added until they submit | — | done |
 
 Notes:
 - Slice 5 is the first to be cut if time runs out (ADR 005); slice 6 is mandatory.
-- Slices 0 and 6 use the simplified pipeline. Slices 2, 3, 4 and 5 require
+- Slices 0 and 6 use the simplified pipeline. Slices 2, 3, 4, 5 and 7 require
   `security-reviewer`.
+- Slice 7 was not planned: it fixes two gaps the user found when trying the delivered app.
 - Slice 0 carries the most setup risk: Prisma with NestJS in Docker, the types package in
   workspaces, images built from the repository root.
 
@@ -56,11 +58,13 @@ this list feeds the README.
   stays in the table (ADR 021). Production: removed by age.
 - **Accounts without a course** — an interrupted or lost redemption can leave one (ADR 022);
   the student can add a code in the LMS (ADR 027). Production: cleaned up by age.
-- **Carrying the code through sign-in** — a student who already has an account pastes the
-  code into "Add a course" (ADR 027). Production: the link opens the right flow for whoever
-  is signed in, and shows what the code grants before it is used.
+- **Carrying the code through sign-in** — the link opens "Add a course" only for a student
+  who is already signed in (ADR 029). A signed-out student with an account signs in and
+  opens the link again, or pastes the code. Production: the link opens the right flow for
+  whoever signs in, and shows what the code grants before it is used.
 - **Undoing a course added to the wrong account** — at a shared browser the course goes to
-  whoever is signed in; the page names the account. Production: moved by support or from
+  whoever is signed in, and the activation link now leads there; the page names the account
+  and says how to get out. Production: moved by support or from
   the parent's account.
 - **CSRF tokens** — the session cookie is `SameSite=Strict` and the API refuses any body
   that is not JSON (ADR 026). Production: the same, plus a token if any cross-site flow
@@ -68,6 +72,8 @@ this list feeds the README.
 - **Revoking a session** — signing out clears the cookie; a copied token stays valid until
   it expires, at most four hours (ADR 008, ADR 026). Production: short-lived access tokens
   with a revocable refresh token.
+- **Lessons per year** — a course held for two years shows two cards with the same lessons
+  (ADR 002, 028). Production: content per subject and year.
 - **Lesson progress and rich lessons** — a lesson is plain text with no completion mark,
   video or markdown (ADR 025). Production: a content service with media, and per-student
   progress.
@@ -75,8 +81,8 @@ this list feeds the README.
   dashboard. Production: a validated return path.
 - **Password reset** — the student has a username and no email (ADR 007). Production:
   recovery through the parent's account.
-- **Resolving a duplicate purchase** — the student is told to contact their parent
-  (ADR 005). Production: prevented at checkout or refunded.
+- **Resolving a duplicate purchase** — a second code for the same course and year is
+  refused and the student is told to contact their parent (ADR 005, 028). Production: prevented at checkout or refunded.
 - **Correcting the year after purchase** — not possible here. Production: changed by the
   parent or by support.
 - **Per-year products** — one course per subject (ADR 002). Production: a product per

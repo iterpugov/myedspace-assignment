@@ -7,10 +7,10 @@
 
 ## Phase
 
-Slices 0–6 are done and the README is delivered. Slice 7 is in progress: two changes asked
-for after delivery — the same course for two different years on one account (ADR 028), and
-the activation link opening "Add a course" for a signed-in student (ADR 029). Full
-pipeline with `security-reviewer`.
+All slices are done, including slice 7, added after delivery for two gaps the user found:
+the same course can now be held for two different years (ADR 028), and the activation link
+opens "Add a course" for a signed-in student (ADR 029). The README is up to date, the
+journey was walked from a clean clone following it, and all three test suites pass there.
 
 Left for the user: make the GitHub repository public (DEL-1).
 

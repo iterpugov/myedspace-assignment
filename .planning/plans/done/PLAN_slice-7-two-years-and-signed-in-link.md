@@ -1,7 +1,7 @@
 # PLAN — Slice 7 «Same course for two years; activation link for a signed-in student»
 
-> Produced by the `planner` subagent on 2026-10-02. Section 1 lists the decisions the user
-> has to make before `tdd-guide` starts; the rest assumes the recommendations.
+> **Done.** Produced by the `planner` subagent on 2026-10-02. The user took every
+> recommendation in section 1 (D1–D9, M1–M5).
 
 Two behaviour changes the user asked for after delivery. One student account can hold the
 same course for two different years, and a signed-in student who opens an activation link
@@ -165,3 +165,31 @@ try, the unique-index sentence, key decisions, number of ADRs, limitations, test
 - `retry: false` on `/activate` shares a query key with observers using the default.
 - Two cards with identical lessons look odd; recorded as a limitation, per ADR 002.
 - The existing local volume gets the migration in place; `--build` is required.
+
+## Changed during implementation
+
+- **A cached session does not count as an answer** (`typescript-reviewer`). The page first
+  decided as soon as the cache held anything, so a stale "signed out" left by an earlier
+  page showed the onboarding form to a signed-in student. It now waits for the API. Test
+  added.
+- **The code is removed from the history entry once it is in the field**
+  (`security-reviewer`, Low). The plan kept it there so a reload would keep the prefill;
+  at a shared browser "Back" would then show an unused code to the next student. ADR 029
+  was amended: a reload loses the prefill. Test added.
+- **Double navigation was a real bug during GREEN**, as the plan warned: with the session
+  already cached, removing the fragment cancelled the navigation to add-course. The effect
+  now makes at most one navigation per run.
+- **Integration test apps bind to 127.0.0.1** — outside the plan's scope, in its own
+  commit. A run where every request timed out was traced to another program on the machine
+  holding the same port number on 127.0.0.1 while supertest bound the wildcard address.
+  This also explains the one unexplained hang reported in slice 5.
+- One limit for a code entering the SPA (`CODE_INPUT_MAX_LENGTH`) instead of three copies.
+- `security-reviewer`: PASS. Not changed: a link crafted by someone else can prefill their
+  code for a signed-in student; the worst case is a course they paid for, after a click.
+- During a check of the new history test the parent session discarded the uncommitted SPA
+  changes with a mistaken `git checkout`. They were restored from the session's own records
+  and re-verified (139 SPA tests, as before); the work was committed right after.
+- Verified by hand: the migration applied on the existing volume with five enrolments;
+  Maths Year 9 plus Year 10 on one account; the same year refused and its code left valid;
+  the link forwarded a signed-in student, prefilled, sent no request until submit; no code
+  in the API logs.

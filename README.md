@@ -42,11 +42,13 @@ Open <http://localhost:8080>. If the port is taken: `WEB_PORT=8081 docker compos
 
 Things to try:
 
-- Open the activation link again and submit the form: "This code has already been used."
+- Sign out, open the activation link again and submit the form with another username:
+  "This code has already been used."
 - Open `/lms` or a lesson URL in a private window: the LMS is closed without a session.
-- Beyond the brief: buy a second course, then "Add a course" in the LMS and paste the code.
-  A code for a course the student already has is refused there, and stays valid for
-  another student.
+- Beyond the brief: buy a second course and open its link while signed in. It opens "Add a
+  course" with the code filled in; nothing is added until "Add course" is pressed.
+- Buy the same course for another year: it is added as a second card. The same course and
+  year again is refused, and that code stays valid for another student.
 
 ## Tests
 
@@ -54,8 +56,8 @@ Needs Node 22.12 or newer and `npm ci` at the repository root.
 
 | Command | What runs | Needs Docker |
 |---|---|---|
-| `npm test` | 79 API unit tests (Jest) and 102 SPA tests (Vitest, React Testing Library) | no |
-| `npm run test:int` | 207 API integration tests over HTTP against a real PostgreSQL (Testcontainers) | yes |
+| `npm test` | 79 API unit tests (Jest) and 139 SPA tests (Vitest, React Testing Library) | no |
+| `npm run test:int` | 218 API integration tests over HTTP against a real PostgreSQL (Testcontainers) | yes |
 
 The integration tests carry the weight: access rules, single use of a code under concurrent
 requests, and every interrupted step of the multi-step writes described below. There is no
@@ -134,7 +136,7 @@ a state that is safe and can be finished later.
 |---|---|---|
 | Checkout (ADR 021) | issue codes → charge → save the order | A code nobody has seen, never a saved order without a code. One case stays open: a charge whose order then fails to save; a provider webhook would reconcile it |
 | Onboarding (ADR 022) | create the student → claim the code → enrol → confirm | The claim is one conditional update and is the single-use gate. An interrupted redemption is finished for the student in the claim, never for whoever presents the code next. At worst an account without a course; never a lost seat |
-| Add a course (ADR 027) | check for a duplicate → claim → enrol → confirm | The check can be stale, so the unique index on (student, course) is the real rule; on a late duplicate the claim is released. This is the only compensating step in the system |
+| Add a course (ADR 027) | check for a duplicate → claim → enrol → confirm | The check can be stale, so the unique index on (student, course, year) is the real rule; on a late duplicate the claim is released. This is the only compensating step in the system |
 
 The price is more states and more tests than one transaction would need.
 
@@ -177,12 +179,12 @@ The ones that shaped the system:
 | The purchase produces a single-use activation code, stored as a hash | It is the only link between a payment and an account, so it is treated as a credential | [009](.planning/adr/009-activation-code.md), [020](.planning/adr/020-handling-the-activation-code.md) |
 | Codes are issued before the order is saved | A failure can leave an unused code but never a paid order without access | [021](.planning/adr/021-codes-issued-before-the-order.md) |
 | Redemption is a claim bound to the student, resumable, no shared transaction | Single use holds under concurrency, and a crash mid-way never loses a paid seat | [022](.planning/adr/022-redemption-without-a-shared-transaction.md) |
-| A code can also add a course to an existing account | A second purchase should not force a second account | [005](.planning/adr/005-second-purchase-for-existing-student.md), [027](.planning/adr/027-adding-a-course-to-an-existing-account.md) |
+| A code can also add a course to an existing account; the same course can be held once per year; the link opens "Add a course" for a signed-in student | A second purchase should not force a second account, and moving up a year is a second purchase | [005](.planning/adr/005-second-purchase-for-existing-student.md), [027](.planning/adr/027-adding-a-course-to-an-existing-account.md), [028](.planning/adr/028-one-enrolment-per-course-and-year.md), [029](.planning/adr/029-activation-link-for-a-signed-in-student.md) |
 | Session token in an `HttpOnly` cookie; username instead of email | Not readable by scripts; a child may not have an email address | [007](.planning/adr/007-student-logs-in-with-username.md), [008](.planning/adr/008-jwt-in-httponly-cookie.md), [026](.planning/adr/026-login-and-logout-contract.md) |
 | LMS reads are scoped by enrolment and answer 404 otherwise | There is no path that returns a lesson by id alone | [025](.planning/adr/025-lms-contract-and-access-rule.md) |
 | PostgreSQL with Prisma; migrations as a one-shot compose service; integration tests on a real database | The rules that matter here are unique indexes and conditional updates, which a fake database does not prove | [006](.planning/adr/006-postgresql-prisma-migrations-as-a-step.md), [013](.planning/adr/013-test-strategy.md) |
 
-Full register: [`.planning/adr/README.md`](.planning/adr/README.md) (27 decisions).
+Full register: [`.planning/adr/README.md`](.planning/adr/README.md) (29 decisions).
 
 ## How AI was used
 
@@ -223,8 +225,12 @@ The security review was mandatory on the activation path, credentials and LMS ac
   scoped to the student ([plan 4](.planning/plans/done/PLAN_slice-4-lms.md)).
 - *Reviews found two races* in the add-course claim step, fixed with a re-read and one
   retry ([plan 5](.planning/plans/done/PLAN_slice-5-add-course.md)).
-- *I cut scope.* Adding a course was built in its smallest variant: the code is pasted in
-  the LMS rather than carried through sign-in (ADR 027).
+- *I cut scope, then corrected the product.* Adding a course was built in its smallest
+  variant (ADR 027). Trying the result, I found two gaps and had them fixed: the same course
+  could not be held for two years, and the link ignored a signed-in student (ADR 028, 029,
+  [plan 7](.planning/plans/done/PLAN_slice-7-two-years-and-signed-in-link.md)).
+- *A flaky test run was traced, not retried.* A hanging integration run turned out to be a
+  port clash with another program on the machine; the test apps now bind to 127.0.0.1.
 
 **Artefacts.**
 
@@ -260,7 +266,8 @@ Deliberately not built. The full list with reasons is under "Out of scope" in
 | Signing out clears the cookie but does not revoke the token (four hours at most) | Short-lived access tokens with a revocable refresh token |
 | No password reset | Recovery through the parent's account |
 | The final "mark redeemed" step checks that the code is claimed, not by whom; safe because only the claimant reaches it | Bound to the student |
-| Lessons are plain text, with no progress | A content service with media and per-student progress |
+| Lessons are plain text, with no progress, and the same for every year of a course | A content service with media, per-year content and per-student progress |
+| A signed-out student with an account signs in and opens the link again; the code is not carried through sign-in | The link opens the right flow for whoever signs in |
 | No browser end-to-end tests, no CI | A small journey suite; the same test commands on every push |
 
 ## Notes
