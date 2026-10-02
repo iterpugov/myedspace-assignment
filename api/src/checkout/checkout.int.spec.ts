@@ -8,7 +8,7 @@ import { configureApp } from '../app.setup';
 import { ActivationService } from '../activation/activation.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { seedCourses } from '../seed';
-import { createTestApp } from '../testing/create-test-app';
+import { createTestApp, listenOnLoopback } from '../testing/create-test-app';
 import { resetDatabase } from '../testing/reset-database';
 import { PAYMENT_GATEWAY, type PaymentGateway } from './payment/payment-gateway';
 
@@ -291,7 +291,7 @@ describe('Checkout — POST /api/orders (PUR-3, PUR-4)', () => {
       // The failure below is expected; keep Nest's error log out of the test output.
       failingApp.useLogger(false);
       configureApp(failingApp);
-      await failingApp.init();
+      await listenOnLoopback(failingApp);
     });
 
     beforeEach(() => {
@@ -339,7 +339,7 @@ describe('Checkout — POST /api/orders (PUR-3, PUR-4)', () => {
       failingApp = moduleRef.createNestApplication();
       failingApp.useLogger(false);
       configureApp(failingApp);
-      await failingApp.init();
+      await listenOnLoopback(failingApp);
     });
 
     beforeEach(() => {

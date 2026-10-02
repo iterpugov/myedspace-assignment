@@ -10,7 +10,7 @@ import { SESSION_COOKIE } from '../identity/session.constants';
 import { EnrolmentService } from '../lms/enrolment.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { seedCourses } from '../seed';
-import { createTestApp } from '../testing/create-test-app';
+import { createTestApp, listenOnLoopback } from '../testing/create-test-app';
 import { ActivationService } from './activation.service';
 import { resetDatabase } from '../testing/reset-database';
 
@@ -376,7 +376,7 @@ describe('Onboarding — POST /api/activations (ONB-1..ONB-4, ADR 022, ADR 023)'
       // The failure below is expected; keep Nest's error log out of the test output.
       failingApp.useLogger(false);
       configureApp(failingApp);
-      await failingApp.init();
+      await listenOnLoopback(failingApp);
     });
 
     afterAll(async () => {
@@ -460,7 +460,7 @@ describe('Onboarding — POST /api/activations (ONB-1..ONB-4, ADR 022, ADR 023)'
     const failing = moduleRef.createNestApplication();
     failing.useLogger(false);
     configureApp(failing);
-    await failing.init();
+    await listenOnLoopback(failing);
     return failing;
   }
 
@@ -614,7 +614,7 @@ describe('Onboarding — POST /api/activations (ONB-1..ONB-4, ADR 022, ADR 023)'
       failingApp = moduleRef.createNestApplication();
       failingApp.useLogger(false);
       configureApp(failingApp);
-      await failingApp.init();
+      await listenOnLoopback(failingApp);
     });
 
     afterAll(async () => {
