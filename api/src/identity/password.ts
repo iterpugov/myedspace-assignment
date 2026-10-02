@@ -54,3 +54,19 @@ export async function verifyPassword(password: string, stored: string): Promise<
     return false;
   }
 }
+
+let dummyHash: Promise<string> | undefined;
+
+/**
+ * A well-formed hash that no password matches: the hash of random bytes, made once per
+ * process. Login verifies against it when the username is unknown, so that answer costs
+ * one scrypt run like a wrong password does (ADR 026).
+ */
+export function dummyPasswordHash(): Promise<string> {
+  dummyHash ??= hashPassword(randomBytes(32).toString('base64')).catch((error: unknown) => {
+    // Not remembered: a failure here must not turn every unknown username into an error.
+    dummyHash = undefined;
+    throw error;
+  });
+  return dummyHash;
+}

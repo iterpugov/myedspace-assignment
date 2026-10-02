@@ -5,6 +5,9 @@ export const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 export const PASSWORD_MIN_LENGTH = 8;
 export const PASSWORD_MAX_LENGTH = 128;
 
+/** At sign-in only the length is checked; anything that cannot match is a 401 (ADR 026). */
+export const LOGIN_USERNAME_MAX_LENGTH = 64;
+
 /** The form a username is stored and compared in, which makes it case-insensitive. */
 export function normaliseUsername(input: string): string {
   return input.trim().toLowerCase();

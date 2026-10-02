@@ -1,5 +1,5 @@
 import { randomBytes, scryptSync } from 'node:crypto';
-import { hashPassword, verifyPassword } from './password';
+import { dummyPasswordHash, hashPassword, verifyPassword } from './password';
 
 /** Obviously fake; never a real credential. */
 const FAKE_PASSWORD = 'not-a-real-password';
@@ -68,6 +68,27 @@ describe('Password hashing (ADR 008, scrypt)', () => {
 
       await expect(verifyPassword(FAKE_PASSWORD, stored)).resolves.toBe(true);
       await expect(verifyPassword(`${FAKE_PASSWORD}x`, stored)).resolves.toBe(false);
+    });
+  });
+
+  describe('dummyPasswordHash (ADR 026: an unknown username still costs one scrypt run)', () => {
+    it('has the stored-hash format with the current parameters, a 16-byte salt and a 64-byte key, so verifyPassword cannot return early on it', async () => {
+      const dummy = await dummyPasswordHash();
+
+      expect(dummy).toMatch(STORED);
+      const [, salt, hash] = STORED.exec(dummy) ?? [];
+      expect(Buffer.from(salt, 'base64')).toHaveLength(16);
+      expect(Buffer.from(hash, 'base64')).toHaveLength(64);
+      // Made once, when first asked for: every login compares against the same value.
+      await expect(dummyPasswordHash()).resolves.toBe(dummy);
+    });
+
+    it('never matches: verifyPassword(<anything>, dummy) is false', async () => {
+      const dummy = await dummyPasswordHash();
+
+      await expect(verifyPassword(FAKE_PASSWORD, dummy)).resolves.toBe(false);
+      await expect(verifyPassword('', dummy)).resolves.toBe(false);
+      await expect(verifyPassword(dummy, dummy)).resolves.toBe(false);
     });
   });
 });
