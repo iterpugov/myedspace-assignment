@@ -545,6 +545,61 @@ describe('Onboarding — POST /api/activations (ONB-1..ONB-4, ADR 022, ADR 023)'
     });
   });
 
+  describe('releasing a claim (ActivationService.release, ADR 027)', () => {
+    const releasing = (): ActivationService => app.get(ActivationService);
+
+    it('releases a claim of that student that is not redeemed, and the code can then be claimed again', async () => {
+      const code = await buyCode();
+      const codes = app.get(ActivationService);
+      const { id } = await codeRow(code);
+      const studentId = randomUUID();
+      expect(await codes.claim(id, studentId)).toBe(true);
+
+      expect(await releasing().release(id, studentId)).toBe(true);
+
+      expect(await codeRow(code)).toMatchObject({ claimedByStudentId: null, redeemedAt: null });
+      const next = randomUUID();
+      expect(await codes.claim(id, next)).toBe(true);
+      expect((await codeRow(code)).claimedByStudentId).toBe(next);
+    });
+
+    it('does not release a redeemed code', async () => {
+      const code = await buyCode();
+      const codes = app.get(ActivationService);
+      const { id } = await codeRow(code);
+      const studentId = randomUUID();
+      await codes.claim(id, studentId);
+      await codes.confirm(id);
+      const redeemed = await codeRow(code);
+      expect(redeemed.redeemedAt).toBeInstanceOf(Date);
+
+      expect(await releasing().release(id, studentId)).toBe(false);
+
+      expect(await codeRow(code)).toEqual(redeemed);
+    });
+
+    it("does not release another student's claim", async () => {
+      const code = await buyCode();
+      const codes = app.get(ActivationService);
+      const { id } = await codeRow(code);
+      const owner = randomUUID();
+      await codes.claim(id, owner);
+
+      expect(await releasing().release(id, randomUUID())).toBe(false);
+
+      expect(await codeRow(code)).toMatchObject({ claimedByStudentId: owner, redeemedAt: null });
+    });
+
+    it('reports false for a code that is not claimed, and leaves it unclaimed', async () => {
+      const code = await buyCode();
+      const { id } = await codeRow(code);
+
+      expect(await releasing().release(id, randomUUID())).toBe(false);
+
+      expect(await codeRow(code)).toMatchObject({ claimedByStudentId: null, redeemedAt: null });
+    });
+  });
+
   describe('when the identity module fails unexpectedly', () => {
     let failingApp: INestApplication;
 

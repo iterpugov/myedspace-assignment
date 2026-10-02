@@ -40,12 +40,12 @@ export function sessionTokenOf(response: request.Response): string {
   return line.split(';')[0].slice(`${SESSION_COOKIE}=`.length);
 }
 
-/**
- * A parent buys one seat and the student redeems the code, both through the real endpoints:
- * a real student with a real password hash, one enrolment and a session token.
- */
-export async function onboardStudent(app: INestApplication, options: OnboardingOptions = {}): Promise<OnboardedStudent> {
-  const { username = 'sam', firstName = 'Sam', subject = 'Maths', year = 7 } = options;
+/** A parent buys one seat through the real endpoint; returns the plain activation code and the course id. */
+export async function buyCode(
+  app: INestApplication,
+  subject: Subject = 'Maths',
+  year = 7,
+): Promise<{ code: string; courseId: string }> {
   const course = await app.get(PrismaService).course.findUnique({ where: { subject } });
   if (!course) throw new Error(`Seed has no ${subject} course`);
 
@@ -53,7 +53,16 @@ export async function onboardStudent(app: INestApplication, options: OnboardingO
     .post('/api/orders')
     .send({ parentName: 'Pat Parent', parentEmail: 'pat@example.com', seats: [{ courseId: course.id, year }] })
     .expect(201);
-  const code = (order.body as CheckoutResponse).seats[0].activationCode;
+  return { code: (order.body as CheckoutResponse).seats[0].activationCode, courseId: course.id };
+}
+
+/**
+ * A parent buys one seat and the student redeems the code, both through the real endpoints:
+ * a real student with a real password hash, one enrolment and a session token.
+ */
+export async function onboardStudent(app: INestApplication, options: OnboardingOptions = {}): Promise<OnboardedStudent> {
+  const { username = 'sam', firstName = 'Sam', subject = 'Maths', year = 7 } = options;
+  const { code, courseId } = await buyCode(app, subject, year);
 
   const response = await request(app.getHttpServer())
     .post('/api/activations')
@@ -61,5 +70,5 @@ export async function onboardStudent(app: INestApplication, options: OnboardingO
     .expect(201);
 
   const token = sessionTokenOf(response);
-  return { student: response.body as StudentResponse, token, cookie: `${SESSION_COOKIE}=${token}`, courseId: course.id };
+  return { student: response.body as StudentResponse, token, cookie: `${SESSION_COOKIE}=${token}`, courseId };
 }

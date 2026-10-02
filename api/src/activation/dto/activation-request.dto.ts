@@ -7,23 +7,12 @@ import {
   PASSWORD_MIN_LENGTH,
   USERNAME_PATTERN,
 } from '../../identity/credential-rules';
-import {
-  ACTIVATION_CODE_MAX_INPUT_LENGTH,
-  isWellFormedActivationCode,
-  NORMALISED_ACTIVATION_CODE,
-  normaliseActivationCode,
-} from '../activation-code';
+import { IsActivationCode } from './is-activation-code';
 
 type Input = { value: unknown };
 
 export class ActivationRequestDto implements ActivationRequest {
-  // Only something shaped like a code is normalised; anything else is left as it came and fails below.
-  @Transform(({ value }: Input) => 
-    typeof value === 'string' && isWellFormedActivationCode(value) ? normaliseActivationCode(value) : value,
-  )
-  @IsString()
-  @MaxLength(ACTIVATION_CODE_MAX_INPUT_LENGTH)
-  @Matches(NORMALISED_ACTIVATION_CODE, { message: 'code must be a well-formed activation code' })
+  @IsActivationCode()
   code!: string;
 
   @Transform(({ value }: Input) => (typeof value === 'string' ? value.trim() : value))

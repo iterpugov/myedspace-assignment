@@ -66,6 +66,19 @@ export class ActivationService {
     return count === 1;
   }
 
+  /**
+   * Undoes a claim, and reports whether it did. Only for a claim that cannot be completed
+   * because the student already has the course (ADR 027): the condition lets go of a code
+   * only while it is claimed by that student and not redeemed, so a used code stays used.
+   */
+  async release(codeId: string, studentId: string): Promise<boolean> {
+    const { count } = await this.prisma.activationCode.updateMany({
+      where: { id: codeId, claimedByStudentId: studentId, redeemedAt: null },
+      data: { claimedByStudentId: null },
+    });
+    return count === 1;
+  }
+
   /** Marks a claimed code as fully redeemed, once its enrolment exists. Safe to repeat. */
   async confirm(codeId: string): Promise<void> {
     await this.prisma.activationCode.updateMany({

@@ -67,7 +67,8 @@ model ActivationCode {
   courseId           String    @db.Uuid
   year               Int
   createdAt          DateTime  @default(now()) @db.Timestamptz(3)
-  /// Set once, by a conditional update: the single-use gate (ADR 022).
+  /// Set by a conditional update: the single-use gate (ADR 022). Cleared only when the
+  /// enrolment is refused as a duplicate, never once the code is redeemed (ADR 027).
   claimedByStudentId String?   @db.Uuid
   /// Set after the enrolment exists. Claimed but not redeemed = to be resumed.
   redeemedAt         DateTime? @db.Timestamptz(3)

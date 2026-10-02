@@ -1,21 +1,10 @@
-import { ConflictException, Injectable, Logger, UnprocessableEntityException } from '@nestjs/common';
-import type {
-  ActivationErrorResponse,
-  ActivationFailureReason,
-  ActivationRequest,
-  StudentResponse,
-} from '@mes/contracts';
+import { Injectable, Logger } from '@nestjs/common';
+import type { ActivationRequest, StudentResponse } from '@mes/contracts';
 import { UsernameTakenError } from '../identity/identity.errors';
 import { IdentityService } from '../identity/identity.service';
-import { EnrolmentService } from '../lms/enrolment.service';
-import { type ActivationCodeRecord, ActivationService } from './activation.service';
-
-function failure(statusCode: 409 | 422, reason: ActivationFailureReason, message: string) {
-  const body = { statusCode, message, reason } satisfies ActivationErrorResponse;
-  return statusCode === 409 ? new ConflictException(body) : new UnprocessableEntityException(body);
-}
-
-const codeUsed = () => failure(409, 'code_used', 'This activation code has already been used');
+import { ActivationService } from './activation.service';
+import { codeInvalid, codeUsed, onboardingRefusal } from './redemption-failures';
+import { RedemptionSteps } from './redemption-steps';
 
 @Injectable()
 export class OnboardingService {
@@ -24,7 +13,7 @@ export class OnboardingService {
   constructor(
     private readonly codes: ActivationService,
     private readonly identity: IdentityService,
-    private readonly enrolments: EnrolmentService,
+    private readonly steps: RedemptionSteps,
   ) {}
 
   /**
@@ -41,7 +30,8 @@ export class OnboardingService {
    * - the enrolment is created and the code is marked redeemed.
    *
    * If the last part fails, the claim still says whose code it is, and the next
-   * presentation of the code finishes the job (see `resume`). Nothing retries on its own.
+   * presentation of the code finishes the job — or releases the claim, if that student has
+   * meanwhile got the course through another code (ADR 027; see RedemptionSteps). Nothing retries on its own.
    *
    * The cost of this order: the worst leftover is an account without a course — the
    * loser of a race, or a crash between creating the student and the claim — and nothing
@@ -51,12 +41,12 @@ export class OnboardingService {
   async onboard(request: ActivationRequest): Promise<StudentResponse> {
     const code = await this.codes.findByCode(request.code);
     if (!code) {
-      throw failure(422, 'code_invalid', 'This activation code is not valid');
+      throw codeInvalid();
     }
     if (code.claimedByStudentId) {
       // Whatever happens to the unfinished redemption, the answer for whoever presents a
       // claimed code is the same: it is used.
-      await this.resume(code, code.claimedByStudentId);
+      await this.steps.resume(code, code.claimedByStudentId);
       throw codeUsed();
     }
 
@@ -67,24 +57,12 @@ export class OnboardingService {
       this.logger.warn(`Student ${student.id} lost the claim for a code and has no course`);
       throw codeUsed();
     }
-    await this.finish(code, student.id);
+    // A student created a moment ago has no course and no session yet, so this does not end as a duplicate.
+    await this.steps.finish(code, student.id);
 
     // Neither the code nor the password is ever logged (ADR 020).
     this.logger.log(`Activation code redeemed for student ${student.id}`);
     return student;
-  }
-
-  private async resume(code: ActivationCodeRecord, studentId: string): Promise<void> {
-    if (code.redeemedAt) return;
-    try {
-      await this.finish(code, studentId);
-      this.logger.log(`Interrupted redemption completed for student ${studentId}`);
-    } catch (error) {
-      this.logger.error(
-        `Completing the interrupted redemption for student ${studentId} failed`,
-        error instanceof Error ? error.stack : undefined,
-      );
-    }
   }
 
   private async register({ username, password, firstName }: ActivationRequest): Promise<StudentResponse> {
@@ -92,20 +70,9 @@ export class OnboardingService {
       return await this.identity.register({ username, password, firstName });
     } catch (error) {
       if (error instanceof UsernameTakenError) {
-        throw failure(409, 'username_taken', 'That username is taken');
+        throw onboardingRefusal(409, 'username_taken', 'That username is taken');
       }
       throw error;
     }
-  }
-
-  /**
-   * Completes a claimed code: enrols the student the claim names and marks the code
-   * redeemed. Both steps are safe to repeat, so this also resumes a redemption that was
-   * interrupted — always for the claiming student, never for whoever presents the code.
-   */
-  private async finish(code: ActivationCodeRecord, studentId: string): Promise<void> {
-    if (code.redeemedAt) return;
-    await this.enrolments.enrol({ studentId, courseId: code.courseId, year: code.year, seatId: code.seatId });
-    await this.codes.confirm(code.id);
   }
 }

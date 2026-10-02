@@ -91,3 +91,23 @@ export interface LessonResponse extends LessonSummaryResponse {
   /** Plain text; paragraphs are separated by a blank line. */
   body: string;
 }
+
+export interface RedeemCodeRequest {
+  /** Activation code as shown to the parent; case and hyphens do not matter. */
+  code: string;
+}
+
+/** The course added to the signed-in student's account by POST /api/redemptions. */
+export interface RedeemCodeResponse {
+  courseId: string;
+  year: number;
+}
+
+export type RedemptionFailureReason = 'code_invalid' | 'code_used' | 'course_already_owned';
+
+/** Body of a 409 or 422 from POST /api/redemptions. */
+export interface RedemptionErrorResponse {
+  statusCode: number;
+  message: string;
+  reason: RedemptionFailureReason;
+}
