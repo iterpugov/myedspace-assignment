@@ -19,6 +19,20 @@ export function normaliseActivationCode(code: string): string {
   return code.replace(/[-\s]/g, '').toUpperCase();
 }
 
+/** A code in the form it is hashed in. */
+export const NORMALISED_ACTIVATION_CODE = new RegExp(`^[${ALPHABET}]{${GROUPS * GROUP_LENGTH}}$`);
+/** Longest input worth normalising; a real code with hyphens is 17 characters. */
+export const ACTIVATION_CODE_MAX_INPUT_LENGTH = 64;
+
+/** Whether the input could be a code at all. Checked before hashing, so junk never reaches the database. */
+export function isWellFormedActivationCode(input: unknown): boolean {
+  return (
+    typeof input === 'string' &&
+    input.length <= ACTIVATION_CODE_MAX_INPUT_LENGTH &&
+    NORMALISED_ACTIVATION_CODE.test(normaliseActivationCode(input))
+  );
+}
+
 /**
  * What is stored instead of the code. A plain SHA-256 is enough because the code is
  * random with 75 bits of entropy; a slow password hash would add nothing.

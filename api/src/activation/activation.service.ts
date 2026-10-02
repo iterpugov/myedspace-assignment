@@ -9,6 +9,15 @@ export interface SeatEntitlement {
   year: number;
 }
 
+/** A stored code: what it grants and how far its redemption has got. */
+export interface ActivationCodeRecord extends SeatEntitlement {
+  id: string;
+  /** The student the code was claimed for, once it has been claimed. */
+  claimedByStudentId: string | null;
+  /** Set when the enrolment exists. Claimed but not redeemed means an interrupted redemption. */
+  redeemedAt: Date | null;
+}
+
 export interface IssuedCode {
   seatId: string;
   /** The plain code. It is not stored; this return value is its only copy. */
@@ -33,5 +42,35 @@ export class ActivationService {
     });
 
     return issued.map(({ seat, code }) => ({ seatId: seat.seatId, code }));
+  }
+
+  /** The stored code matching a plain one, if it was ever issued. */
+  async findByCode(code: string): Promise<ActivationCodeRecord | undefined> {
+    const record = await this.prisma.activationCode.findUnique({
+      where: { codeHash: hashActivationCode(code) },
+      select: { id: true, seatId: true, courseId: true, year: true, claimedByStudentId: true, redeemedAt: true },
+    });
+    return record ?? undefined;
+  }
+
+  /**
+   * Claims a code for a student and reports whether this call won it. The condition is
+   * checked by the database inside one statement, so of any number of concurrent claims
+   * exactly one succeeds. This is what makes a code single use.
+   */
+  async claim(codeId: string, studentId: string): Promise<boolean> {
+    const { count } = await this.prisma.activationCode.updateMany({
+      where: { id: codeId, claimedByStudentId: null },
+      data: { claimedByStudentId: studentId },
+    });
+    return count === 1;
+  }
+
+  /** Marks a claimed code as fully redeemed, once its enrolment exists. Safe to repeat. */
+  async confirm(codeId: string): Promise<void> {
+    await this.prisma.activationCode.updateMany({
+      where: { id: codeId, claimedByStudentId: { not: null }, redeemedAt: null },
+      data: { redeemedAt: new Date() },
+    });
   }
 }
