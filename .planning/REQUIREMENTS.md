@@ -21,10 +21,10 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 ## LMS access
 
-- [ ] **LMS-1** Only authenticated students can access the LMS
-- [ ] **LMS-2** LMS contains a simple dashboard
-- [ ] **LMS-3** LMS shows a list of lessons
-- [ ] **LMS-4** Students can get access to a lesson
+- [x] **LMS-1** Only authenticated students can access the LMS
+- [x] **LMS-2** LMS contains a simple dashboard
+- [x] **LMS-3** LMS shows a list of lessons
+- [x] **LMS-4** Students can get access to a lesson
 
 ## Catalogue data (provided)
 

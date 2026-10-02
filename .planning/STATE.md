@@ -7,16 +7,15 @@
 
 ## Phase
 
-Slices 0–3 are done: a parent buys a course, and the student opens the activation link,
-creates an account and lands on `/lms`, signed in. `/lms` shows only a welcome, and
-`/login` is still a placeholder. Next is slice 4 (LMS: login, logout, dashboard, lessons),
-full pipeline with `security-reviewer`, starting with `planner`.
+Slices 0–4 are done: a parent buys a course, the student opens the activation link and
+creates an account, and from then on signs in, sees their courses and lessons, opens a
+lesson and signs out. The brief's journey works end to end. Next is slice 5 (optional: add
+a course to an existing account, ADR 005), then slice 6 (README and delivery, mandatory).
 
-Carried into slice 4 from the slice 3 reviews:
-- Every LMS endpoint needs `SessionGuard` and a query scoped to the student's enrolments.
-- The dashboard must handle a student with no courses (ADR 022).
-- `verifyPassword` exists and is tested but has no caller yet; login uses it.
-- Login should answer the same for an unknown username and a wrong password.
+Carried forward from the slice 4 reviews:
+- The compose check and the browser walk-through were done by hand; slice 6 repeats them
+  from a clean clone following the README.
+- `/login` now exists, which is what the code-through-login flow of ADR 005 needs.
 
 ## Decided
 
@@ -48,6 +47,8 @@ Carried into slice 4 from the slice 3 reviews:
 - Redemption: student first, then a claim bound to the student; resumable (ADR 022)
 - Onboarding contract: one form, one request (ADR 023)
 - No signing secret in the repository (ADR 024)
+- LMS contract and access rule: enrolment-scoped reads, 404 for anything else (ADR 025)
+- Login and logout contract (ADR 026)
 
 ## Open decisions
 

@@ -14,7 +14,7 @@ with `docker compose up` and the journey works up to that point.
 | 1 | Design foundation, catalogue and product page: tokens and components from `web/DESIGN_SYSTEM.md`; seed of three courses; select a course, then the year from its range | PUR-1, PUR-2, CAT-1, CAT-2 | The parent selects a course and can pick only a year that course covers; the page is built from the documented components | 55 min | done |
 | 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | done |
 | 3 | Onboarding: form, username, password; account and enrolment created when the code is redeemed (ADR 022) | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | done |
-| 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | not started |
+| 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | done |
 | 5 | Optional — add a course to an existing account: code carried through login, code entry in the LMS, duplicate message | ADR 005 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | not started |
 | 6 | README and delivery: architecture, decisions, AI usage with artefacts, clean-clone check | DEL-1, DEL-3 – DEL-5, TEC-3 | The full journey is walked through by hand following the README | 20 min | not started |
 
@@ -47,14 +47,24 @@ this list feeds the README.
   provider's hosted page, pending orders confirmed by webhook.
 - **Idempotent checkout** — a double submit creates two orders; the form only disables the
   button while a request is pending. Production: an idempotency key per checkout attempt.
-- **Rate limiting** — the anonymous checkout endpoint is not throttled. Production: limits
-  per client at the gateway, and on code redemption above all.
+- **Rate limiting** — the anonymous checkout and sign-in endpoints are not throttled, and
+  each sign-in attempt costs one scrypt run. Production: limits per client at the gateway,
+  on code redemption and sign-in above all, and lockout per account.
 - **Cleaning up orphan activation codes** — a code issued for an order that then failed
   stays in the table (ADR 021). Production: removed by age.
 - **Accounts without a course** — an interrupted or lost redemption can leave one (ADR 022).
   Production: cleaned up by age, or offered a way to add a code.
-- **CSRF tokens** — the session cookie is `SameSite=Strict` and the API accepts JSON only.
-  Production: the same, plus a token if any cross-site flow appears.
+- **CSRF tokens** — the session cookie is `SameSite=Strict` and the API refuses any body
+  that is not JSON (ADR 026). Production: the same, plus a token if any cross-site flow
+  appears.
+- **Revoking a session** — signing out clears the cookie; a copied token stays valid until
+  it expires, at most four hours (ADR 008, ADR 026). Production: short-lived access tokens
+  with a revocable refresh token.
+- **Lesson progress and rich lessons** — a lesson is plain text with no completion mark,
+  video or markdown (ADR 025). Production: a content service with media, and per-student
+  progress.
+- **Returning to the requested page after sign-in** — the student always lands on the
+  dashboard. Production: a validated return path.
 - **Password reset** — the student has a username and no email (ADR 007). Production:
   recovery through the parent's account.
 - **Resolving a duplicate purchase** — the student is told to contact their parent
