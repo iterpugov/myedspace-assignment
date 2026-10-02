@@ -31,6 +31,8 @@ the decision; it records the call, it does not make it.
 | 022 | [Redeeming a code: the student first, then a claim that binds the code to them](022-redemption-without-a-shared-transaction.md) | accepted | 2026-10-02 |
 | 023 | [Onboarding: one form, one request, distinct answers for a bad and a used code](023-onboarding-contract.md) | accepted | 2026-10-02 |
 | 024 | [No signing secret in the repository; `@nestjs/jwt` and `cookie-parser`](024-session-secret-and-libraries.md) | accepted | 2026-10-02 |
+| 025 | [LMS: two guarded endpoints, every read scoped by the student's enrolment](025-lms-contract-and-access-rule.md) | accepted | 2026-10-02 |
+| 026 | [Login gives one answer for every failure; logout only clears the cookie](026-login-and-logout-contract.md) | accepted | 2026-10-02 |
 
 ## Format
 

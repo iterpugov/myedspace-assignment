@@ -51,5 +51,7 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 022 | Redemption without a shared transaction: create the student, claim the code for them, enrol, confirm; an interrupted redemption is resumed by the code | [022](adr/022-redemption-without-a-shared-transaction.md) |
 | 023 | Onboarding is one form and one request; unknown code 422, used code 409, taken username 409; first name is the only personal detail | [023](adr/023-onboarding-contract.md) |
 | 024 | `JWT_SECRET` is never committed: optional, random at start when unset; `@nestjs/jwt` (HS256) and `cookie-parser` | [024](adr/024-session-secret-and-libraries.md) |
+| 025 | LMS is two guarded endpoints; a lesson is found only through the student's enrolment, anything else is 404; `lms` reads lessons through `catalogue`; lessons are plain text | [025](adr/025-lms-contract-and-access-rule.md) |
+| 026 | Login answers 401 identically for unknown username and wrong password, with a dummy hash check; logout clears the cookie without revoking the token | [026](adr/026-login-and-logout-contract.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
