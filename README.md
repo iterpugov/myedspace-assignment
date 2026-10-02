@@ -161,6 +161,10 @@ link is shown on the page), lesson content (seeded plain text), and the visual l
 (an approximation described in [`web/DESIGN_SYSTEM.md`](web/DESIGN_SYSTEM.md), with no
 MyEdSpace assets).
 
+The parent's name and email address are saved with the order and not used further: with
+guest checkout they are what identifies the buyer, and the email is where production would
+send the activation link.
+
 ## Key decisions
 
 Every decision is an ADR with its alternatives and what production would do differently.
