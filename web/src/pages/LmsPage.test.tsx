@@ -69,14 +69,27 @@ describe('LmsPage', () => {
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
   });
 
-  it('shows the "no courses yet" notice and no error for an empty course list', async () => {
+  it('has an "Add a course" link to /lms/add-course in the page body when the student has courses (M13)', async () => {
+    stubLmsApi(() => json([maths]));
+
+    renderLms();
+
+    expect(await screen.findByRole('heading', { name: 'Maths · Year 7' })).toBeInTheDocument();
+    // The header has its own "Add a course"; this one is on the dashboard itself.
+    const main = within(screen.getByRole('main'));
+    expect(main.getByRole('link', { name: 'Add a course' })).toHaveAttribute('href', '/lms/add-course');
+  });
+
+  it('shows the "no courses yet" notice pointing to the activation code, the "Add a course" link and no error for an empty course list (M13)', async () => {
     stubLmsApi(() => json([]));
 
     renderLms();
 
     expect(
-      await screen.findByText('You have no courses yet. Ask your parent for an activation link.'),
+      await screen.findByText('You have no courses yet. Add one with the activation code from your parent.'),
     ).toBeInTheDocument();
+    const main = within(screen.getByRole('main'));
+    expect(main.getByRole('link', { name: 'Add a course' })).toHaveAttribute('href', '/lms/add-course');
     expect(screen.getByRole('heading', { name: 'Welcome, Sam' })).toBeInTheDocument();
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });

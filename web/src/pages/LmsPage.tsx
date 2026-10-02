@@ -22,7 +22,7 @@ export function LmsPage() {
       <h1 className="type-heading text-brand">Welcome, {student.firstName}</h1>
       {courses ? (
         courses.length === 0 ? (
-          <Notice>You have no courses yet. Ask your parent for an activation link.</Notice>
+          <Notice>You have no courses yet. Add one with the activation code from your parent.</Notice>
         ) : (
           <div className="grid gap-6 md:grid-cols-2">
             {courses.map((course) => (
@@ -49,6 +49,7 @@ export function LmsPage() {
       ) : (
         <Notice live>Loading…</Notice>
       )}
+      <TextLink to="/lms/add-course">Add a course</TextLink>
     </div>
   );
 }

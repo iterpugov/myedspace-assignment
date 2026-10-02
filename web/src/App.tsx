@@ -1,5 +1,6 @@
 import { Route, Routes } from 'react-router';
 import { ActivatePage } from './pages/ActivatePage';
+import { AddCoursePage } from './pages/AddCoursePage';
 import { CheckoutPage } from './pages/CheckoutPage';
 import { ConfirmationPage } from './pages/ConfirmationPage';
 import { LessonPage } from './pages/LessonPage';
@@ -20,6 +21,7 @@ export function App() {
       {/* Every LMS route goes inside this guard. */}
       <Route element={<RequireSession />}>
         <Route path="/lms" element={<LmsPage />} />
+        <Route path="/lms/add-course" element={<AddCoursePage />} />
         <Route path="/lms/courses/:courseId/lessons/:lessonId" element={<LessonPage />} />
       </Route>
       <Route path="*" element={<PlaceholderPage title="Page not found" message="There is nothing at this address." />} />

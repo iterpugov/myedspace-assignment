@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Link, MemoryRouter, Route, Routes } from 'react-router';
 import { RequireSession } from './RequireSession';
@@ -54,6 +54,17 @@ describe('RequireSession', () => {
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
     expect(screen.queryByRole('link', { name: 'Sign in' })).not.toBeInTheDocument();
     expect(screen.queryByTestId('login-page')).not.toBeInTheDocument();
+  });
+
+  it('has an "Add a course" link to /lms/add-course in the header navigation, next to "My courses" (M13)', async () => {
+    stubApi({ 'GET /api/session': () => json(sam) });
+
+    renderGuarded();
+
+    expect(await screen.findByTestId('child')).toBeInTheDocument();
+    const nav = within(screen.getByRole('navigation', { name: 'Main' }));
+    expect(nav.getByRole('link', { name: 'My courses' })).toHaveAttribute('href', '/lms');
+    expect(nav.getByRole('link', { name: 'Add a course' })).toHaveAttribute('href', '/lms/add-course');
   });
 
   it('shows "Loading…" and not the child while the session answer is pending', async () => {

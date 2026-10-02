@@ -47,6 +47,7 @@ export function RequireSession() {
           <HeaderLink to="/lms" end>
             My courses
           </HeaderLink>
+          <HeaderLink to="/lms/add-course">Add a course</HeaderLink>
           <HeaderButton onClick={() => signOut.mutate()} disabled={signOut.isPending}>
             Sign out
           </HeaderButton>

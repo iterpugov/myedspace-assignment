@@ -135,10 +135,17 @@ function expectFormKeptItsValues() {
   expect(repeatPasswordField()).toHaveValue(fakePassword);
 }
 
-/** The "Sign in" link in the page body; the header has its own, which is always there. */
-function signInLinkInPage(mode: 'get' | 'query') {
-  const main = within(screen.getByRole('main'));
-  return mode === 'get' ? main.getByRole('link', { name: 'Sign in' }) : main.queryByRole('link', { name: 'Sign in' });
+/**
+ * The "Sign in" link the form shows after a used code. The header has its own, and the page
+ * has a standing one above the form ("Already have an account?"); both are always there.
+ */
+function signInLinkInForm(mode: 'get' | 'query') {
+  const form = submitButton().closest('form');
+  if (!form) throw new Error('The submit button is not inside a form');
+  const inForm = within(form);
+  return mode === 'get'
+    ? inForm.getByRole('link', { name: 'Sign in' })
+    : inForm.queryByRole('link', { name: 'Sign in' });
 }
 
 describe('ActivatePage', () => {
@@ -185,6 +192,23 @@ describe('ActivatePage', () => {
 
     await user.type(codeField(), activationCode);
     expect(codeField()).toHaveValue(activationCode);
+  });
+
+  it('tells a student who already has an account to sign in and add the code there, with a plain link to /login (ADR 027)', async () => {
+    const fetchMock = stubApi();
+
+    renderActivate(activateLink);
+    await waitFor(() => expect(address()).toBe('/activate'));
+
+    // Before any submit the only "Sign in" link in the page body is the one in this sentence.
+    const signIn = within(screen.getByRole('main')).getByRole('link', { name: 'Sign in' });
+    expect(signIn).toHaveAttribute('href', '/login');
+    expect(signIn.parentElement).toHaveTextContent(
+      'Already have an account? Sign in, choose Add a course and paste this code.',
+    );
+    // The sentence is not part of the form: it is there before and after any attempt.
+    expect(signInLinkInForm('query')).not.toBeInTheDocument();
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('shows a required error under each field and sends no request when submitted empty', async () => {
@@ -410,7 +434,7 @@ describe('ActivatePage', () => {
     await user.click(submitButton());
 
     expect(await screen.findByRole('alert')).toHaveTextContent('This code has already been used.');
-    expect(signInLinkInPage('get')).toHaveAttribute('href', '/login');
+    expect(signInLinkInForm('get')).toHaveAttribute('href', '/login');
     expect(usernameField()).not.toHaveAttribute('aria-invalid', 'true');
     expectFormKeptItsValues();
     expect(submitButton()).toBeEnabled();
@@ -427,7 +451,7 @@ describe('ActivatePage', () => {
     await user.click(submitButton());
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Check the details and try again.');
-    expect(signInLinkInPage('query')).not.toBeInTheDocument();
+    expect(signInLinkInForm('query')).not.toBeInTheDocument();
     expectFormKeptItsValues();
     expect(submitButton()).toBeEnabled();
   });
@@ -454,7 +478,7 @@ describe('ActivatePage', () => {
       'We could not create your account. Please try again.',
     );
     expect(activationRequests(fetchMock)).toHaveLength(1);
-    expect(signInLinkInPage('query')).not.toBeInTheDocument();
+    expect(signInLinkInForm('query')).not.toBeInTheDocument();
     expectFormKeptItsValues();
     expect(submitButton()).toBeEnabled();
     expect(screen.queryByRole('heading', { name: /welcome/i })).not.toBeInTheDocument();

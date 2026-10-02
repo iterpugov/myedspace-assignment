@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useLocation, useNavigate } from 'react-router';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { activationCodeFromHash } from '../activation-code-from-hash';
+import { CODE_INVALID, validateActivationCode } from '../activation-code-rules';
 import { activate, ActivationError } from '../api/activations';
 import { SESSION_KEY } from '../api/session';
 import { lmsKeys } from '../use-student';
@@ -24,9 +25,6 @@ interface OnboardingForm {
 const USERNAME_PATTERN = /^[a-z0-9_]{3,20}$/;
 const PASSWORD_MIN_LENGTH = 8;
 const PASSWORD_MAX_LENGTH = 128;
-const NORMALISED_CODE = /^[A-HJ-NP-Z2-9]{15}$/;
-
-const CODE_INVALID = 'This activation code is not valid. Check it and try again.';
 
 const normaliseUsername = (value: string) => value.trim().toLowerCase();
 
@@ -95,12 +93,7 @@ function OnboardingFormView({ initialCode }: { initialCode: string }) {
         maxLength={64}
         required
         error={errors.code?.message}
-        {...register('code', {
-          validate: (value) => {
-            if (value.trim() === '') return 'Enter your activation code';
-            return NORMALISED_CODE.test(value.replace(/[-\s]/g, '').toUpperCase()) || CODE_INVALID;
-          },
-        })}
+        {...register('code', { validate: validateActivationCode })}
       />
       <Field
         label="First name"
@@ -203,6 +196,17 @@ export function ActivatePage() {
         <div className="max-w-form">
           <h1 className="type-heading text-brand">Activate your course</h1>
           <p className="type-body mt-4">Create your account to start learning.</p>
+          {/* The code is not carried through sign-in (ADR 027): the student pastes it. */}
+          <p className="type-body mt-2">
+            Already have an account?{' '}
+            <Link
+              to="/login"
+              className="text-brand underline outline-offset-2 focus-visible:outline-2 focus-visible:outline-brand"
+            >
+              Sign in
+            </Link>
+            , choose Add a course and paste this code.
+          </p>
         </div>
         <OnboardingFormView initialCode={initialCode} />
       </div>
