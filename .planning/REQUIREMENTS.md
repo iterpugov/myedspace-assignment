@@ -14,10 +14,10 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 ## Student onboarding
 
-- [ ] **ONB-1** Student accesses onboarding via the invitation or purchase outcome
-- [ ] **ONB-2** Student completes a basic onboarding form
-- [ ] **ONB-3** Student activates their account (e.g. sets a password; no real auth system required)
-- [ ] **ONB-4** On completion, the student can access the platform
+- [x] **ONB-1** Student accesses onboarding via the invitation or purchase outcome
+- [x] **ONB-2** Student completes a basic onboarding form
+- [x] **ONB-3** Student activates their account (e.g. sets a password; no real auth system required)
+- [x] **ONB-4** On completion, the student can access the platform
 
 ## LMS access
 

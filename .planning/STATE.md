@@ -7,17 +7,16 @@
 
 ## Phase
 
-Slices 0–2 are done: a parent picks a course and year, pays through the mock checkout and
-gets an activation code and link. The link opens `/activate`, which is still a placeholder.
-Next is slice 3 (onboarding), full pipeline with `security-reviewer`, starting with
-`planner`.
+Slices 0–3 are done: a parent buys a course, and the student opens the activation link,
+creates an account and lands on `/lms`, signed in. `/lms` shows only a welcome, and
+`/login` is still a placeholder. Next is slice 4 (LMS: login, logout, dashboard, lessons),
+full pipeline with `security-reviewer`, starting with `planner`.
 
-Carried into slice 3 from the slice 2 reviews:
-- Validate the code's shape and cap its length before hashing.
-- Remove `#code=` from the address with `history.replaceState` once it is read.
-- Single use must be enforced by a database constraint (ADR 009).
-- Decide whether an unknown code and a redeemed code get the same response.
-- Whether a failed charge should answer 502 instead of the default 500 is undecided.
+Carried into slice 4 from the slice 3 reviews:
+- Every LMS endpoint needs `SessionGuard` and a query scoped to the student's enrolments.
+- The dashboard must handle a student with no courses (ADR 022).
+- `verifyPassword` exists and is tested but has no caller yet; login uses it.
+- Login should answer the same for an unknown username and a wrong password.
 
 ## Decided
 
@@ -46,16 +45,22 @@ Carried into slice 3 from the slice 2 reviews:
 - An activation code row carries its own course and year (ADR 019)
 - The plain code is never logged; router state and a URL fragment carry it (ADR 020)
 - Codes are issued before the order is saved; no shared transaction (ADR 021)
+- Redemption: student first, then a claim bound to the student; resumable (ADR 022)
+- Onboarding contract: one form, one request (ADR 023)
+- No signing secret in the repository (ADR 024)
 
 ## Open decisions
 
 Each needs the user's call before any code depends on it.
 
 **Product**
-- None open.
+- ADR 005 says a taken username at activation should lead to "this account exists, log in"
+  with the code carried through login; ADR 023 (slice 3) shows "That username is taken.
+  Choose another." The two meet in slice 5; decide there which wording wins.
 
 **Technical**
-- None open.
+- Whether a failed charge answers 502 instead of the default 500 (unreachable with the mock
+  gateway).
 
 ## Blockers
 
