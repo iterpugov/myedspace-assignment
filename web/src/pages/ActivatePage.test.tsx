@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent, { type UserEvent } from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router';
+import { RequireSession } from '../RequireSession';
 import { ActivatePage } from './ActivatePage';
 import { LmsPage } from './LmsPage';
 
@@ -30,7 +31,8 @@ const refused =
 
 /**
  * POST /api/activations answers as the test says. GET /api/session behaves like the real
- * API: 401 until an activation has succeeded, then the student.
+ * API: 401 until an activation has succeeded, then the student. GET /api/lms/courses is what
+ * the dashboard asks for once the student lands on /lms; it answers with no courses.
  */
 function stubApi(activationReply: ActivationReply = created) {
   let signedIn = false;
@@ -43,6 +45,9 @@ function stubApi(activationReply: ActivationReply = created) {
     }
     if (input === '/api/session' && method === 'GET') {
       return signedIn ? json(sam) : json({ statusCode: 401, message: 'Unauthorized' }, 401);
+    }
+    if (input === '/api/lms/courses' && method === 'GET') {
+      return signedIn ? json([]) : json({ statusCode: 401, message: 'Unauthorized' }, 401);
     }
     throw new Error(`Unexpected request: ${method} ${String(input)}`);
   });
@@ -84,7 +89,9 @@ function renderActivate(...initialEntries: string[]) {
               </>
             }
           />
-          <Route path="/lms" element={<LmsPage />} />
+          <Route element={<RequireSession />}>
+            <Route path="/lms" element={<LmsPage />} />
+          </Route>
           <Route path="/login" element={<p data-testid="login-page">Login page</p>} />
         </Routes>
       </MemoryRouter>

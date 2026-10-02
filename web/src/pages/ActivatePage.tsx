@@ -4,6 +4,8 @@ import { useForm } from 'react-hook-form';
 import { useLocation, useNavigate } from 'react-router';
 import { activationCodeFromHash } from '../activation-code-from-hash';
 import { activate, ActivationError } from '../api/activations';
+import { SESSION_KEY } from '../api/session';
+import { lmsKeys } from '../use-student';
 import { Button } from '../ui/Button';
 import { Field } from '../ui/Field';
 import { Notice } from '../ui/Notice';
@@ -45,7 +47,9 @@ function OnboardingFormView({ initialCode }: { initialCode: string }) {
     // The request holds the password and the code; keep neither in the cache (ADR 020).
     gcTime: 0,
     onSuccess: (student) => {
-      queryClient.setQueryData(['session'], student);
+      // Whatever an earlier student of this browser left behind goes first.
+      queryClient.removeQueries({ queryKey: lmsKeys.all });
+      queryClient.setQueryData(SESSION_KEY, student);
       // Replacing the entry keeps "Back" from returning to a form with a used code.
       navigate('/lms', { replace: true });
     },

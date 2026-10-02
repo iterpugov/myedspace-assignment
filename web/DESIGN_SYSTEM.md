@@ -77,8 +77,8 @@ is the open substitute.
 
 | Component | Description |
 |---|---|
-| `PageShell` | Header plus a white main area. An optional `hero` is shown on a blue band under the header (product page); without it the page is plain white (checkout, onboarding, LMS) |
-| `Header` | Blue bar with a faint 1px `line-brand` outline: text wordmark on the left, navigation links on the right ("Courses", "Sign in"); the links wrap under the wordmark on a phone |
+| `PageShell` | Header plus a white main area. An optional `hero` is shown on a blue band under the header (product page); without it the page is plain white (checkout, onboarding, LMS). An optional `nav` replaces the header links |
+| `Header` | Blue bar with a faint 1px `line-brand` outline: text wordmark on the left, navigation on the right; the links wrap under the wordmark on a phone. Public pages show "Courses" and "Sign in"; inside the LMS the layout passes "My courses" (`HeaderLink`) and "Sign out" (`HeaderButton`) |
 | `Button` | `primary`: lime, ink text, notched, 56px tall. `outline`: white, 1px `line-brand` border, blue text. `link` (`TextLink`): blue text, used for "Back". All show a visible focus ring and a disabled state |
 | `Card` | `surface-tint` background, notched, 32px padding; optional small label above the title ("Unit 1") |
 | `ChoiceCard` | A `Card` that is one option of a radio group: the whole card is the click target, and the selected card turns `brand` with white text |
@@ -103,7 +103,9 @@ pixel-block dividers and scattered squares of the real site are left out as well
 
 Components are built when a page first needs them: slice 1 builds `PageShell`, `Header`,
 `Button` (primary), `TextLink`, `ChoiceCard`, `Select` and `Notice`; slice 2 adds `Card`
-and `Field`. `Steps` and the `outline` button arrive with the pages that use them.
+and `Field`; slice 4 adds `HeaderLink` and `HeaderButton` for the LMS navigation. Lesson
+text is a single column at most 65ch wide (`max-w-prose`). A disabled `HeaderButton` is
+dimmed (`opacity-60`), because the grey disabled fill does not read on the blue bar. `Steps` and the `outline` button arrive with the pages that use them.
 
 Only the colours in the table above exist in the Tailwind theme — the default palette is
 switched off, so an undocumented colour does not compile.

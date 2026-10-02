@@ -1,31 +1,54 @@
 import { useQuery } from '@tanstack/react-query';
-import { Navigate } from 'react-router';
-import { fetchSession } from '../api/session';
+import { fetchMyCourses } from '../api/lms';
+import { useSessionExpiry } from '../use-session-expiry';
+import { lmsKeys, useStudent } from '../use-student';
+import { Card } from '../ui/Card';
 import { Notice } from '../ui/Notice';
-import { PageShell } from '../ui/PageShell';
+import { TextLink } from '../ui/TextLink';
 
-/** The student's home. Only the welcome exists so far; it is reachable only when signed in. */
+/** The student's dashboard: their courses, each with its lessons. Rendered inside RequireSession. */
 export function LmsPage() {
-  const { data: student, isError } = useQuery({ queryKey: ['session'], queryFn: fetchSession });
-
-  if (student === null) {
-    return <Navigate to="/login" replace />;
-  }
+  const student = useStudent();
+  const { data: courses, error } = useQuery({
+    queryKey: lmsKeys.courses(student.id),
+    queryFn: fetchMyCourses,
+    // A refusal is an answer: an ended session must reach the sign-in page at once.
+    retry: false,
+  });
+  const sessionExpired = useSessionExpiry(error);
 
   return (
-    <PageShell>
-      <div className="flex max-w-form flex-col gap-6">
-        {student ? (
-          <>
-            <h1 className="type-heading text-brand">Welcome, {student.firstName}</h1>
-            <Notice>Your courses will appear here.</Notice>
-          </>
-        ) : isError ? (
-          <Notice variant="error">We could not load your account. Please try again in a moment.</Notice>
+    <div className="flex flex-col gap-8">
+      <h1 className="type-heading text-brand">Welcome, {student.firstName}</h1>
+      {courses ? (
+        courses.length === 0 ? (
+          <Notice>You have no courses yet. Ask your parent for an activation link.</Notice>
         ) : (
-          <Notice live>Loading…</Notice>
-        )}
-      </div>
-    </PageShell>
+          <div className="grid gap-6 md:grid-cols-2">
+            {courses.map((course) => (
+              <Card key={course.courseId} label="Your course">
+                <h2 className="type-subheading text-brand">
+                  {course.subject} · Year {course.year}
+                </h2>
+                <ol className="flex flex-col gap-4 pt-2">
+                  {course.lessons.map((lesson) => (
+                    <li key={lesson.id} className="flex flex-col">
+                      <TextLink to={`/lms/courses/${course.courseId}/lessons/${lesson.id}`}>
+                        {lesson.position}. {lesson.title}
+                      </TextLink>
+                      <p className="type-small text-ink/70">{lesson.summary}</p>
+                    </li>
+                  ))}
+                </ol>
+              </Card>
+            ))}
+          </div>
+        )
+      ) : error && !sessionExpired ? (
+        <Notice variant="error">We could not load your courses. Please try again.</Notice>
+      ) : (
+        <Notice live>Loading…</Notice>
+      )}
+    </div>
   );
 }
