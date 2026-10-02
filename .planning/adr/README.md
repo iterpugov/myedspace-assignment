@@ -33,6 +33,7 @@ the decision; it records the call, it does not make it.
 | 024 | [No signing secret in the repository; `@nestjs/jwt` and `cookie-parser`](024-session-secret-and-libraries.md) | accepted | 2026-10-02 |
 | 025 | [LMS: two guarded endpoints, every read scoped by the student's enrolment](025-lms-contract-and-access-rule.md) | accepted | 2026-10-02 |
 | 026 | [Login gives one answer for every failure; logout only clears the cookie](026-login-and-logout-contract.md) | accepted | 2026-10-02 |
+| 027 | [Adding a course: check for a duplicate, claim, enrol; release the claim on a late duplicate](027-adding-a-course-to-an-existing-account.md) | accepted | 2026-10-02 |
 
 ## Format
 

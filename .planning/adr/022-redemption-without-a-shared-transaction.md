@@ -55,3 +55,8 @@ the presenter — and is then told the code is already used.
 The claim would carry a lease, the enrolment would be driven by an outbox event with an
 idempotent consumer, and accounts left without a course would be cleaned up or offered a
 way to add a code.
+
+## Notes
+Amended 2026-10-02 (ADR 027): a claim can be released, by a conditional update, when the
+enrolment is refused because the student already has the course. A redeemed code is never
+released.

@@ -14,8 +14,8 @@ secret, two ways to use it. Codes are copied, not typed.
 | Who opens it | What happens |
 |---|---|
 | New student, via the link | Onboarding form and password create the account and the enrolment |
-| New student, login already taken | "This account exists, please log in"; the code is carried through login |
-| Logged-in student, via the link or by entering the code in the LMS | The course is offered for adding to the current account |
+| New student, login already taken | "That username is taken. Choose another." (ADR 023) |
+| Student who already has an account | Signs in and enters the code in the LMS; the course is added to that account (ADR 027) |
 
 Rules:
 - A student can hold many enrolments, but only one per course. Redeeming a code for a
@@ -41,3 +41,8 @@ runs out; the data model supports it from the start.
 ## In production
 The parent would add a subject from their own account and attach it to the chosen child
 directly. Duplicate purchases would be prevented at checkout or refunded.
+
+## Notes
+Amended 2026-10-02 (ADR 027): the code is not carried through sign-in and the activation
+link does not detect a signed-in student; an existing student pastes the code into the
+"Add a course" form in the LMS. A taken username keeps the ADR 023 wording.

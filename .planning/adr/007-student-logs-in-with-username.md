@@ -24,3 +24,8 @@ and carries the activation code through login (ADR 005).
 ## In production
 Recovery would go through the parent's account and email. Usernames could be generated or
 scoped to the family to avoid "taken" errors.
+
+## Notes
+Amended 2026-10-02 (ADR 023, ADR 027): a taken username answers "That username is taken.
+Choose another.", and the activation code is not carried through login; a student who
+already has an account signs in and pastes the code into "Add a course".

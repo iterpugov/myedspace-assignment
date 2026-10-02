@@ -53,5 +53,6 @@ One line per accepted ADR; rationale lives in the ADR itself.
 | 024 | `JWT_SECRET` is never committed: optional, random at start when unset; `@nestjs/jwt` (HS256) and `cookie-parser` | [024](adr/024-session-secret-and-libraries.md) |
 | 025 | LMS is two guarded endpoints; a lesson is found only through the student's enrolment, anything else is 404; `lms` reads lessons through `catalogue`; lessons are plain text | [025](adr/025-lms-contract-and-access-rule.md) |
 | 026 | Login answers 401 identically for unknown username and wrong password, with a dummy hash check; logout clears the cookie without revoking the token | [026](adr/026-login-and-logout-contract.md) |
+| 027 | A signed-in student adds a course with a code: duplicate check, claim, enrol; a claim is released if the enrolment turns out to be a duplicate; the code is pasted in the LMS, not carried through sign-in | [027](adr/027-adding-a-course-to-an-existing-account.md) |
 
 Open decisions are tracked in [`STATE.md`](STATE.md).
