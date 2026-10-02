@@ -15,7 +15,7 @@ with `docker compose up` and the journey works up to that point.
 | 2 | Checkout and activation code: order with seats, mock gateway, code issue, confirmation page | PUR-3, PUR-4 | After paying, the link and the code are shown; a year outside the course's range is rejected | 35 min | done |
 | 3 | Onboarding: form, username, password; account and enrolment created when the code is redeemed (ADR 022) | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | done |
 | 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | done |
-| 5 | Optional — add a course to an existing account: code carried through login, code entry in the LMS, duplicate message | ADR 005 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | not started |
+| 5 | Optional — add a course to an existing account: code entry in the LMS, duplicate message (smallest variant, ADR 027) | ADR 005, ADR 027 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | done |
 | 6 | README and delivery: architecture, decisions, AI usage with artefacts, clean-clone check | DEL-1, DEL-3 – DEL-5, TEC-3 | The full journey is walked through by hand following the README | 20 min | not started |
 
 Notes:
@@ -52,8 +52,14 @@ this list feeds the README.
   on code redemption and sign-in above all, and lockout per account.
 - **Cleaning up orphan activation codes** — a code issued for an order that then failed
   stays in the table (ADR 021). Production: removed by age.
-- **Accounts without a course** — an interrupted or lost redemption can leave one (ADR 022).
-  Production: cleaned up by age, or offered a way to add a code.
+- **Accounts without a course** — an interrupted or lost redemption can leave one (ADR 022);
+  the student can add a code in the LMS (ADR 027). Production: cleaned up by age.
+- **Carrying the code through sign-in** — a student who already has an account pastes the
+  code into "Add a course" (ADR 027). Production: the link opens the right flow for whoever
+  is signed in, and shows what the code grants before it is used.
+- **Undoing a course added to the wrong account** — at a shared browser the course goes to
+  whoever is signed in; the page names the account. Production: moved by support or from
+  the parent's account.
 - **CSRF tokens** — the session cookie is `SameSite=Strict` and the API refuses any body
   that is not JSON (ADR 026). Production: the same, plus a token if any cross-site flow
   appears.

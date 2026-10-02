@@ -7,15 +7,17 @@
 
 ## Phase
 
-Slices 0–4 are done: a parent buys a course, the student opens the activation link and
-creates an account, and from then on signs in, sees their courses and lessons, opens a
-lesson and signs out. The brief's journey works end to end. Next is slice 5 (optional: add
-a course to an existing account, ADR 005), then slice 6 (README and delivery, mandatory).
+Slices 0–5 are done. The brief's journey works end to end: a parent buys a course, the
+student activates an account, signs in, sees courses and lessons, opens a lesson and signs
+out. Beyond the brief, a signed-in student can add a second course with another code
+(ADR 027, smallest variant). Next is slice 6: README and delivery (architecture, decisions,
+AI usage with artefacts, clean-clone check) — mandatory, simplified pipeline.
 
-Carried forward from the slice 4 reviews:
-- The compose check and the browser walk-through were done by hand; slice 6 repeats them
-  from a clean clone following the README.
-- `/login` now exists, which is what the code-through-login flow of ADR 005 needs.
+Carried into slice 6:
+- The compose check and the browser walk-through were done by hand in every slice; slice 6
+  repeats them from a clean clone following the README.
+- `ActivationService.confirm` is conditioned on "claimed by anyone", not on the student
+  just enrolled; safe through the claim invariant, noted by `security-reviewer` as Low.
 
 ## Decided
 
@@ -49,15 +51,12 @@ Carried forward from the slice 4 reviews:
 - No signing secret in the repository (ADR 024)
 - LMS contract and access rule: enrolment-scoped reads, 404 for anything else (ADR 025)
 - Login and logout contract (ADR 026)
+- Adding a course to an existing account: smallest variant, release on a late duplicate
+  (ADR 027)
 
 ## Open decisions
 
 Each needs the user's call before any code depends on it.
-
-**Product**
-- ADR 005 says a taken username at activation should lead to "this account exists, log in"
-  with the code carried through login; ADR 023 (slice 3) shows "That username is taken.
-  Choose another." The two meet in slice 5; decide there which wording wins.
 
 **Technical**
 - Whether a failed charge answers 502 instead of the default 500 (unreachable with the mock
