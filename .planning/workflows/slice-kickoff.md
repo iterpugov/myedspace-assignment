@@ -29,7 +29,7 @@ edits). Parent must not implement in step 1; wait for planner output, save it to
 - Out: …
 
 Start with step 1. After each step, output:
-- ✅ done / ⏭ skipped / 🚫 blocked
+- done / skipped / blocked
 - what changed (files)
 - open decisions raised
 - recommended next step
@@ -74,7 +74,7 @@ Start with step 1.
 
 | You send | Agent does |
 |----------|------------|
-| `next` / `далее` | Next pipeline step for the current slice |
+| `next` | Next pipeline step for the current slice |
 | `run full pipeline` | All steps until commit or blocker |
 | `skip <step>` | Skip an optional step and say so in the report |
 | `slice done` | Mark the slice complete; show the next one from the roadmap |

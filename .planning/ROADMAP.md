@@ -3,8 +3,8 @@
 Delivery slices for the take-home. Each slice is vertical: when it is done, the app runs
 with `docker compose up` and the journey works up to that point.
 
-> **Status: agreed 2026-10-01.** Estimates add up to about 3 h 45 min without slice 5 and
-> 4 h 10 min with it (slice 1 grew by 30 min with ADR 016).
+> **Status: agreed 2026-10-01; slices 0–5 done.** The estimates below are the ones
+> made when the roadmap was agreed and were not revised afterwards.
 
 ## Slices
 
@@ -30,6 +30,8 @@ Notes:
 Things deliberately not built. Each entry says what a production system would do instead;
 this list feeds the README.
 
+- **Continuous integration** — tests are run by hand. Production: the same test commands
+  on every push.
 - **Parent accounts** — checkout is guest-only (ADR 001). Production: parent login, order
   history, re-sending invitations.
 - **Email delivery** — the invitation link is shown on the confirmation page.

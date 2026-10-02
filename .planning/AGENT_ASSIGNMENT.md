@@ -56,4 +56,5 @@ Implementation (GREEN, refactor) is done by the parent session, not by a subagen
 
 ## Per-slice assignment
 
-Filled in once the roadmap is agreed: one table per slice, task → agent.
+The pipeline planned for each slice is in its plan under [`plans/done/`](plans/done/);
+deviations are under "Changed during implementation" where there were any.
