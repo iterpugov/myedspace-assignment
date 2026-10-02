@@ -36,13 +36,13 @@ Markers: `[ ]` not started · `[~]` in progress · `[x]` done · `[!]` changed o
 
 - [x] **TEC-1** React frontend
 - [x] **TEC-2** Java or Node.js backend
-- [ ] **TEC-3** The journey works end to end
+- [x] **TEC-3** The journey works end to end
 
 ## Deliverables
 
 - [ ] **DEL-1** Source code in a GitHub repository (public, or private shared with
   `leopro`, `azamzamy`, `ser-within-mes`, `Josephaberry54`)
 - [x] **DEL-2** `docker compose up` starts all required services with a single command
-- [ ] **DEL-3** README: architecture overview
-- [ ] **DEL-4** README: key technical decisions
-- [ ] **DEL-5** README: how AI tools were used, with artefacts attached (plans, snippets)
+- [x] **DEL-3** README: architecture overview
+- [x] **DEL-4** README: key technical decisions
+- [x] **DEL-5** README: how AI tools were used, with artefacts attached (plans, snippets)

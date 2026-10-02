@@ -3,7 +3,7 @@
 Delivery slices for the take-home. Each slice is vertical: when it is done, the app runs
 with `docker compose up` and the journey works up to that point.
 
-> **Status: agreed 2026-10-01; slices 0–5 done.** The estimates below are the ones
+> **Status: agreed 2026-10-01; all slices done.** The estimates below are the ones
 > made when the roadmap was agreed and were not revised afterwards.
 
 ## Slices
@@ -16,7 +16,7 @@ with `docker compose up` and the journey works up to that point.
 | 3 | Onboarding: form, username, password; account and enrolment created when the code is redeemed (ADR 022) | ONB-1 – ONB-4 | A student follows the link, creates an account and lands in the LMS; the code does not work twice | 40 min | done |
 | 4 | LMS: login and logout, guard, dashboard, lesson list, lesson page; seed of lessons | LMS-1 – LMS-4 | The LMS is unreachable without login; a lesson of a course the student is not enrolled in does not open | 35 min | done |
 | 5 | Optional — add a course to an existing account: code entry in the LMS, duplicate message (smallest variant, ADR 027) | ADR 005, ADR 027 | A second code adds a course for a logged-in student; a duplicate is rejected and the code stays valid | 25 min | done |
-| 6 | README and delivery: architecture, decisions, AI usage with artefacts, clean-clone check | DEL-1, DEL-3 – DEL-5, TEC-3 | The full journey is walked through by hand following the README | 20 min | not started |
+| 6 | README and delivery: architecture, decisions, AI usage with artefacts, clean-clone check | DEL-1, DEL-3 – DEL-5, TEC-3 | The full journey is walked through by hand following the README | 20 min | done |
 
 Notes:
 - Slice 5 is the first to be cut if time runs out (ADR 005); slice 6 is mandatory.

@@ -1,7 +1,39 @@
 # PLAN — Slice 6: README and delivery
 
 Plan for the last slice: a root `README.md`, a clean-clone check and the hand-in. Produced
-by `planner`; decisions D1–D10 are the user's and are open until recorded below.
+by `planner`. **Done**; the user's decisions and what changed are recorded below.
+
+## Decisions made
+
+| # | Decision |
+|---|---|
+| D1 | One README, ADRs and plans linked |
+| D2 | Curated table of key decisions plus a link to the register |
+| D3 | Factual AI section: model named, plans linked, "the agent wrote, the user decided" |
+| D4 | Minimal tidy of `AGENT_ASSIGNMENT.md`, `slice-kickoff.md`, `ROADMAP.md` status |
+| D5 | Three Mermaid diagrams: deployment, modules, journey sequence |
+| D6 | **No time statement** (the user's call, against the recommendation) |
+| D7 | Both open items left as limitations |
+| D8 | **The repository is made public** by the user (against the recommendation) |
+| D9, D10 | No CI, no extra scripts, no host-development section |
+
+## Changed during implementation
+
+- `code-reviewer` found four inaccurate statements (when "already used" appears, what is
+  refused on a duplicate, the open case of checkout, what the plans record) and several
+  omissions; all fixed before the commit.
+- The README is 265 lines, above the 250-line target: the tables have long rows. The
+  repository map was cut.
+- Clean-clone check: cloned from GitHub into a differently named directory, no `.env`;
+  `docker compose up --build -d --wait`; journey walked in a browser (purchase, link,
+  account, LMS, lesson, sign out, closed `/lms`, sign in, reused code refused); `npm ci`,
+  `npm test` (79 + 102) and `npm run test:int` (207) pass.
+- The first start in the clone used plain `docker compose up` and showed a stale page: a
+  `web` image left by a clean-clone check of an earlier slice had the same name. A machine
+  that never built the project has no such image; the README says `--build` regardless.
+- The browser kept the old `index.html` after the rebuild: nginx sends no `Cache-Control`
+  for it. Not fixed (nginx config is out of this slice's scope); recorded in `STATE.md`.
+- The brief is absent from every pushed commit; checked before the repository goes public.
 
 **Findings that change the slice**
 

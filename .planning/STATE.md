@@ -7,17 +7,18 @@
 
 ## Phase
 
-Slices 0–5 are done. The brief's journey works end to end: a parent buys a course, the
-student activates an account, signs in, sees courses and lessons, opens a lesson and signs
-out. Beyond the brief, a signed-in student can add a second course with another code
-(ADR 027, smallest variant). Next is slice 6: README and delivery (architecture, decisions,
-AI usage with artefacts, clean-clone check) — mandatory, simplified pipeline.
+All slices are done and the work is ready to hand in. The root `README.md` covers how to
+run, the journey, architecture, key decisions, AI usage and limitations. The journey was
+walked from a clean clone following the README, and all three test suites pass there.
 
-Carried into slice 6:
-- The compose check and the browser walk-through were done by hand in every slice; slice 6
-  repeats them from a clean clone following the README.
+Left for the user: make the GitHub repository public (DEL-1).
+
+Known and not fixed, listed in the README as limitations:
+- A failed charge answers the default 500 (unreachable with the mock gateway).
 - `ActivationService.confirm` is conditioned on "claimed by anyone", not on the student
   just enrolled; safe through the claim invariant, noted by `security-reviewer` as Low.
+- The SPA's `index.html` is served without a `Cache-Control` header, so a browser may show
+  a previous build until a reload.
 
 ## Decided
 
@@ -56,11 +57,7 @@ Carried into slice 6:
 
 ## Open decisions
 
-Each needs the user's call before any code depends on it.
-
-**Technical**
-- Whether a failed charge answers 502 instead of the default 500 (unreachable with the mock
-  gateway).
+None.
 
 ## Blockers
 
